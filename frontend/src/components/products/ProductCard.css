@@ -1,0 +1,116 @@
+.product-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border-color);
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.product-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 15px 15px 10px;
+  color: var(--text-color);
+  line-height: 1.4;
+  height: 45px; /* Chiều cao cố định */
+  overflow: hidden;
+}
+
+.product-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 15px 10px;
+  line-height: 1.5;
+  height: 42px; /* Chiều cao cố định cho 2 dòng text */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Giới hạn hiển thị 2 dòng */
+  -webkit-box-orient: vertical;
+  position: relative;
+}
+
+/* Thêm hiệu ứng fade-out nếu text bị cắt */
+.product-description::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50%;
+  height: 20px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  pointer-events: none;
+  display: none; /* Chỉ hiển thị khi cần */
+}
+
+.product-card:hover .product-description::after {
+  display: block; /* Hiển thị khi hover vào card */
+}
+
+/* Đảm bảo phần giá luôn căn đều */
+.product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 10px 15px 15px;
+  align-self: flex-start;
+}
+
+.add-to-cart-button {
+  margin: 0 15px 15px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  align-self: stretch;
+}
+
+.add-to-cart-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+/* Cập nhật lại link để đảm bảo sắp xếp các phần tử đúng */
+.product-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .product-image {
+    height: 180px;
+  }
+  
+  .product-name {
+    font-size: 15px;
+    height: 42px;
+  }
+}

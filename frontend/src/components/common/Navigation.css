@@ -1,0 +1,79 @@
+.navigation {
+  background-color: var(--secondary-color);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100vw; /* Thay đổi thành 100vw để đảm bảo chiếm toàn bộ chiều rộng viewport */
+  left: 0; /* Đảm bảo navigation luôn bám vào cạnh trái của viewport */
+  box-sizing: border-box;
+}
+
+.navigation-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 12px 30px; /* Đưa padding vào container thay vì navigation */
+}
+
+.navigation ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+}
+
+.navigation li {
+  margin: 0 15px;
+  position: relative;
+}
+
+.navigation li a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 8px 0;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.navigation li a:hover {
+  color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+
+.navigation li a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+.navigation li a:hover::after {
+  width: 100%;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .navigation-container {
+    padding: 12px 15px;
+  }
+
+  .navigation ul {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .navigation li {
+    margin: 8px 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .navigation li a {
+    padding: 10px 0;
+  }
+}
