@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { FaShieldAlt, FaTruck, FaCheck } from 'react-icons/fa';
 import { fetchPetById } from '../services/api';
+import ReviewSection from '../components/reviews/ReviewSection';
 import './PetDetailPage.css';
 
 const PetDetailPage = () => {
@@ -11,6 +12,7 @@ const PetDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState(0); // Thêm state cho ảnh được chọn
+    const [reviews, setReviews] = useState([]); 
     const dispatch = useDispatch();
 
     const decreaseQuantity = () => {
@@ -58,6 +60,31 @@ const PetDetailPage = () => {
                     origin: 'Nhà nhân giống uy tín tại TP. HCM'
                 };
                 setPet(demoPet);
+
+                 // Giả lập dữ liệu đánh giá
+                 const demoReviews = [
+                    {
+                        id: 1,
+                        user_name: 'Phạm Văn X',
+                        rating: 5,
+                        comment: 'Bé Poodle rất dễ thương và ngoan. Sức khỏe tốt và đã quen với việc đi vệ sinh đúng chỗ. Rất đáng mua!',
+                        created_at: '2025-03-20T10:15:00Z',
+                        images: [
+                            { image_url: '/images/reviews/pet-review1.jpg' }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        user_name: 'Hoàng Thị Y',
+                        rating: 4.5,
+                        comment: 'Chú chó khỏe mạnh, lông đẹp và rất thân thiện. Shop tư vấn nhiệt tình.',
+                        created_at: '2025-03-05T16:30:00Z'
+                    }
+                ];
+                
+                // Chỉ hiển thị đánh giá nếu pet ID phù hợp
+                setReviews(demoReviews);
+
             } catch (error) {
                 console.error('Error fetching pet details:', error);
             } finally {
@@ -193,6 +220,13 @@ const PetDetailPage = () => {
                     </ul>
                 </div>
             </div>
+
+            <ReviewSection 
+                itemType="pet" 
+                itemId={id} 
+                reviews={reviews}
+            />
+            
 
             <div className="similar-pets-section">
                 <h2>Thú cưng tương tự</h2>

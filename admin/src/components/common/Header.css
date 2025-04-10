@@ -1,0 +1,154 @@
+.admin-header {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--header-height);
+  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 99;
+  transition: left 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.admin-main.expanded + .admin-header {
+  left: var(--sidebar-collapsed-width);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-toggle:hover {
+  background-color: #f5f5f5;
+}
+
+.header-title {
+  margin-left: 16px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-search {
+  position: relative;
+}
+
+.header-search input {
+  padding: 8px 16px;
+  padding-right: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  width: 240px;
+  font-size: 14px;
+}
+
+.header-search i {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.header-notifications {
+  position: relative;
+}
+
+.notification-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background-color: var(--danger-color);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+
+.header-user:hover {
+  background-color: #f5f5f5;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.logout-button:hover {
+  color: var(--danger-color);
+}
