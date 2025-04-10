@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import ReviewSection from '../components/reviews/ReviewSection';
 import { addItem } from '../store/cartSlice';
 import './ProductDetailPage.css';
 
@@ -9,6 +10,7 @@ const ProductDetailPage = () => {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
+    const [reviews, setReviews] = useState([]);
     const dispatch = useDispatch();
     
     const increaseQuantity = () => {
@@ -80,6 +82,42 @@ const ProductDetailPage = () => {
                 if (foundProduct) {
                     setProduct(foundProduct);
                 }
+                
+                // Giả lập dữ liệu đánh giá
+                const demoReviews = [
+                    {
+                        id: 1,
+                        user_name: 'Nguyễn Văn A',
+                        rating: 5,
+                        comment: 'Sản phẩm rất tốt, chó nhà mình rất thích ăn. Lông mượt hơn, ít rụng.',
+                        created_at: '2025-03-15T08:30:00Z',
+                    },
+                    {
+                        id: 2,
+                        user_name: 'Trần Thị B',
+                        rating: 4,
+                        comment: 'Chất lượng sản phẩm tốt, nhưng giá hơi cao. Chó nhà mình ăn khỏe.',
+                        created_at: '2025-02-28T14:20:00Z',
+                        images: [
+                            { image_url: '/images/reviews/review1.jpg' }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        user_name: 'Lê Văn C',
+                        rating: 3,
+                        comment: 'Sản phẩm tạm ổn. Bé nhà mình kén ăn nên phải mix với thức ăn khác.',
+                        created_at: '2025-02-10T09:45:00Z',
+                    }
+                ];
+                
+                // Chỉ hiển thị đánh giá nếu sản phẩm ID phù hợp
+                if (parseInt(id) === 101) {
+                    setReviews(demoReviews);
+                } else {
+                    setReviews([]);
+                }
+
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching product details:', error);
@@ -183,6 +221,13 @@ const ProductDetailPage = () => {
                     <h3><i className="fas fa-shield-alt"></i> Cam kết</h3>
                     <p>Sản phẩm chính hãng 100%, đổi trả trong vòng 7 ngày nếu sản phẩm lỗi</p>
                 </div>
+                     {/* Thêm phần đánh giá ở đây */}
+                <ReviewSection 
+                itemType="product" 
+                itemId={id} 
+                reviews={reviews}
+                />
+
             </div>
         </div>
     );

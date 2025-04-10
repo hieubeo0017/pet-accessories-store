@@ -125,8 +125,7 @@ const FoodPage = () => {
                                 <option value="all">Tất cả</option>
                                 <option value="dog">Chó</option>
                                 <option value="cat">Mèo</option>
-                                <option value="small">Thú nhỏ</option>
-                                <option value="bird">Chim cảnh</option>
+                                    
                             </select>
                         </div>
                     </div>
