@@ -11,7 +11,7 @@ import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-
+import BlogPage from './pages/BlogPage';
 const App = () => {
   return (
     <Router>
@@ -27,6 +27,7 @@ const App = () => {
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/blog" element={<BlogPage />} />
         </Routes>
       </main>
       <Footer />
