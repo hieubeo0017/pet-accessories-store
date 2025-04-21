@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
@@ -11,9 +11,23 @@ import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import LoginPage from './pages/Login';
+import RegisterPage from "@/pages/Register";
+import {useDispatch} from "react-redux";
+import {setUser} from "@/store/userSlice";
+import GuestGuard from "@/middleware/GuestGuard";
 
 const App = () => {
-  return (
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            dispatch(setUser(JSON.parse(storedUser)));
+        }
+    }, [dispatch]);
+
+    return (
     <Router>
       <Header />
       <Navigation />
@@ -27,6 +41,19 @@ const App = () => {
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+           <Route
+                path="/login"
+                element={
+                    <GuestGuard>
+                        <LoginPage />
+                    </GuestGuard>
+                }
+           />
+          <Route path="/register" element={
+              <GuestGuard>
+                  <RegisterPage />
+              </GuestGuard>
+          } />
         </Routes>
       </main>
       <Footer />

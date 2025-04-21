@@ -10,21 +10,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Database connection
-const db = require('./config/database');
-mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.log(err));
+const { mongoURI, connectDB } = require('./config/database');
+const {API} = require("./routes");
+connectDB();
 
 // Routes
-const authRoutes = require('./routes/auth');
-const cartRoutes = require('./routes/cart');
-const orderRoutes = require('./routes/orders');
-const productRoutes = require('./routes/products');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api', API);
 
 // Start server
 app.listen(PORT, () => {

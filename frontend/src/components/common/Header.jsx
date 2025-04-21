@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaSearch, FaShoppingCart, FaPhoneAlt } from 'react-icons/fa';
+import {FaSearch, FaShoppingCart, FaPhoneAlt, FaUserCircle, FaUser, FaSignOutAlt} from 'react-icons/fa';
 import './Header.css';
+import DropDownHeader from "@/components/common/DropDownHeader";
+
 
 const Header = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const cartItems = useSelector(state => state.cart.items);
     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+    const user = useSelector(state => state.user);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -30,13 +33,13 @@ const Header = () => {
                         </Link>
                     </div>
                 </div>
-                
+
                 <div className="header-center">
                     <div className="search-container">
                         <form onSubmit={handleSearch}>
-                            <input 
-                                type="text" 
-                                placeholder="Tìm kiếm thú cưng, thức ăn, phụ kiện..." 
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm thú cưng, thức ăn, phụ kiện..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -46,7 +49,7 @@ const Header = () => {
                         </form>
                     </div>
                 </div>
-                
+
                 <div className="header-right">
                     <div className="hotline">
                         <FaPhoneAlt className="hotline-icon" />
@@ -62,6 +65,14 @@ const Header = () => {
                         </Link>
                     </div>
                 </div>
+                {user ? (
+                    <DropDownHeader user={user} />
+                ) : (
+                    <div className="d-flex gap-2">
+                        <Link to="/login" className="auth-button">Đăng nhập</Link>
+                        <Link to="/register" className="auth-button">Đăng ký</Link>
+                    </div>
+                )}
             </div>
         </header>
     );

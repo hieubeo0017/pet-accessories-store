@@ -1,2 +1,6 @@
 node_modules/
-admin/node_modules/ 
+admin/node_modules/
+frontend/node_modules/
+frontend/.env
+backend/.env
+backend/node_modules/
