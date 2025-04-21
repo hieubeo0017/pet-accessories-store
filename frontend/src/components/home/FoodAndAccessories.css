@@ -1,24 +1,36 @@
-.accessories-showcase {
+.category-showcase {
   width: 100%;
   max-width: 1200px;
   margin: 40px auto;
-  padding: 20px 0;
+  padding: 0 20px;
 }
 
-.accessories-description {
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--secondary-color);
   text-align: center;
-  max-width: 800px;
-  margin: 0 auto 30px;
-  color: #666;
+  margin-bottom: 30px;
+  position: relative;
 }
 
-.accessories-grid {
+.section-title:after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: var(--primary-color);
+  margin: 10px auto 0;
+}
+
+.category-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 25px;
+  margin-top: 30px;
 }
 
-.accessory-card {
+.category-card {
   background: white;
   border-radius: 8px;
   overflow: hidden;
@@ -26,44 +38,52 @@
   transition: transform 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
-.accessory-card:hover {
+.category-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-.accessory-image {
+.category-image {
   position: relative;
   height: 200px;
   overflow: hidden;
 }
 
-.accessory-image img {
+.category-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s;
 }
 
-.accessory-card:hover .accessory-image img {
+.category-card:hover .category-image img {
   transform: scale(1.05);
 }
 
-.discount-tag {
+.discount-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: var(--primary-color);
+  top: 8px;
+  right: 8px; /* Đặt ở góc phải thay vì bên trái */
+  background-color: #ff4757; /* Màu đỏ cam nổi bật thay vì màu xanh */
   color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px; /* Bo tròn nhiều hơn */
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transform: rotate(0);
+  transition: transform 0.3s, background-color 0.3s;
+  z-index: 2;
 }
 
-.accessory-actions {
+.category-card:hover .discount-badge {
+  transform: scale(1.08) rotate(-5deg); /* Hiệu ứng nhẹ khi hover */
+  background-color: #ff2c40; /* Đậm hơn chút khi hover */
+}
+
+.category-actions {
   position: absolute;
   bottom: -50px;
   left: 0;
@@ -74,11 +94,11 @@
   text-align: center;
 }
 
-.accessory-card:hover .accessory-actions {
+.category-card:hover .category-actions {
   bottom: 0;
 }
 
-.accessory-actions .add-to-cart {
+.view-details {
   background-color: var(--primary-color);
   color: white;
   border: none;
@@ -87,13 +107,14 @@
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.3s;
+  display: inline-block;
 }
 
-.accessory-actions .add-to-cart:hover {
+.view-details:hover {
   background-color: var(--button-hover-color);
 }
 
-.accessory-info {
+.category-info {
   padding: 15px;
   display: flex;
   flex-direction: column;
@@ -101,74 +122,109 @@
   flex-grow: 1;
 }
 
-.accessory-name {
-  display: block;
-  font-size: 16px;
+/* Đơn giản hóa này giúp product-name hiển thị đúng */
+.category-name {
   font-weight: 600;
-  margin-bottom: 10px;
-  color: var(--text-color);
+  font-size: 16px;
+  color: #333;
   text-decoration: none;
-  transition: color 0.3s;
-  line-height: 1.4;
-  height: 45px;
-  overflow: hidden;
+  margin-bottom: 5px;
+  display: block;
 }
 
-.accessory-name:hover {
+.category-name:hover {
+  color: var(--primary-color, #1e88e5);
+}
+
+.category-name-button {
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.category-name-button:hover {
   color: var(--primary-color);
 }
 
-.accessory-description {
+.category-description {
   font-size: 14px;
   color: #666;
-  margin: 8px 0;
-  line-height: 1.4;
-  height: 40px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* Giới hạn số dòng hiển thị */
-  -webkit-box-orient: vertical;
+  margin: 5px 0;
 }
 
-.accessory-price {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-}
-
-.current-price {
+.category-price {
   font-size: 18px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-color, #1e88e5);
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.old-price {
+.original-price {
   font-size: 14px;
   color: #999;
   text-decoration: line-through;
+  font-weight: normal;
+}
+
+.view-more {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.view-more-btn {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: var(--primary-color, #1e88e5);
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.view-more-btn:hover {
+  background-color: var(--button-hover-color, #1565c0);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive styles */
 @media (max-width: 1024px) {
-  .accessories-grid {
+  .category-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .accessories-grid {
+  .category-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 480px) {
-  .accessories-grid {
+  .category-grid {
     grid-template-columns: 1fr;
   }
   
-  .accessory-image {
+  .category-image {
     height: 180px;
   }
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 18px;
+  color: #666;
 }

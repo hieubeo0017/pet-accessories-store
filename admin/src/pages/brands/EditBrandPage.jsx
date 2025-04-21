@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchBrandById, updateBrand } from '../../services/brandService';
 import BrandForm from '../../components/brands/BrandForm';
 import PageHeader from '../../components/common/PageHeader';
+import { toast } from 'react-toastify';
 
 const EditBrandPage = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const EditBrandPage = () => {
       } catch (error) {
         console.error('Error loading brand:', error);
         setError('Không thể tải thông tin thương hiệu');
+        toast.error('Không thể tải thông tin thương hiệu');
       } finally {
         setLoading(false);
       }
@@ -30,13 +32,16 @@ const EditBrandPage = () => {
   
   const handleSubmit = async (formData) => {
     setUpdating(true);
+    setError('');
+    
     try {
       await updateBrand(id, formData);
-      console.log('Cập nhật thương hiệu thành công!');
+      toast.success('Cập nhật thương hiệu thành công!');
       navigate('/brands');
     } catch (error) {
       console.error('Error updating brand:', error);
-      setError('Có lỗi xảy ra khi cập nhật thương hiệu');
+      setError(error.message || 'Có lỗi xảy ra khi cập nhật thương hiệu');
+      toast.error(error.message || 'Có lỗi xảy ra khi cập nhật thương hiệu');
     } finally {
       setUpdating(false);
     }

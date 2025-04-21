@@ -1,20 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { fetchFeaturedBrands } from '../../services/api'; // Thêm import API
 import './BrandsList.css';
-
-const brands = [
-    { id: 1, name: 'Royal Canin', logo: '/images/brands/Royal Canin.png' },
-    { id: 2, name: 'Whiskas', logo: '/images/brands/Whiskas.jpg' },
-    { id: 3, name: 'Pedigree', logo: '/images/brands/Pedigree.png' }, 
-    { id: 4, name: 'Kong', logo: '/images/brands/Kong.png' },
-    { id: 5, name: 'Catsrang', logo: '/images/brands/Catsrang.png' }
-];
 
 const BrandsList = () => {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [brands, setBrands] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showAllBrands, setShowAllBrands] = useState(false);
     const [hasBeenVisible, setHasBeenVisible] = useState(false);
     const visibleBrands = 4; // Số thương hiệu hiển thị đồng thời trong chế độ xoay vòng
     const sectionRef = useRef(null);
+
+    // Tải dữ liệu thương hiệu nổi bật
+    useEffect(() => {
+        const loadFeaturedBrands = async () => {
+            try {
+                const response = await fetchFeaturedBrands({
+                    limit: 8 // Lấy tối đa 8 thương hiệu nổi bật
+                });
+                
+                setBrands(response.data || []);
+                setError(null);
+            } catch (err) {
+                console.error('Error loading featured brands:', err);
+                setError('Không thể tải dữ liệu thương hiệu nổi bật');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadFeaturedBrands();
+    }, []);
 
     // Thiết lập Intersection Observer để phát hiện khi section được hiển thị
     useEffect(() => {
@@ -45,14 +62,20 @@ const BrandsList = () => {
 
     // Thiết lập interval cho chế độ xoay vòng
     useEffect(() => {
-        if (!showAllBrands) {
+        if (!showAllBrands && brands.length > 0) {
             const timer = setInterval(() => {
                 setActiveIndex(prevIndex => (prevIndex + 1) % brands.length);
             }, 3000);
 
             return () => clearInterval(timer);
         }
-    }, [showAllBrands]);
+    }, [showAllBrands, brands.length]);
+
+    if (loading) return <div className="loading">Đang tải...</div>;
+    
+    if (error) return <div className="error">{error}</div>;
+    
+    if (brands.length === 0) return null;
 
     return (
         <section className="brands-section" ref={sectionRef}>

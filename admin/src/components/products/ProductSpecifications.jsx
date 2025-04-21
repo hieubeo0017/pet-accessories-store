@@ -1,7 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ProductSpecifications = ({ specifications = [], onChange }) => {
-  const [specs, setSpecs] = useState(specifications);
+  
+
+  // Thêm useEffect để xử lý định dạng dữ liệu
+  useEffect(() => {
+    // Kiểm tra và chuyển đổi định dạng nếu cần
+    if (specifications && specifications.length > 0) {
+      try {
+        // Kiểm tra xem định dạng có phải là {spec_name, spec_value}
+        if (specifications[0].spec_name !== undefined) {
+          const formattedSpecs = specifications.map(spec => ({
+            name: spec.spec_name || '',
+            value: spec.spec_value || ''
+          }));
+          
+          setSpecs(formattedSpecs);
+         
+        } else {
+          // Nếu đã đúng định dạng {name, value}
+          setSpecs(specifications);
+        }
+      } catch (error) {
+        console.error('Error processing specifications:', error);
+        setSpecs([]);
+      }
+    } else {
+      // Nếu không có specifications, đặt mảng rỗng
+      setSpecs([]);
+    }
+  }, [specifications]);
+
+  const [specs, setSpecs] = useState([]);
   const [newSpec, setNewSpec] = useState({ name: '', value: '' });
   
   const handleAddSpec = () => {
@@ -99,7 +129,7 @@ const ProductSpecifications = ({ specifications = [], onChange }) => {
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         .product-specifications {
           margin-top: 15px;
         }

@@ -5,40 +5,45 @@ import Table from '../../components/common/Table';
 import SearchBar from '../../components/common/SearchBar';
 import Pagination from '../../components/common/Pagination';
 import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
+import DetailModal from '../../components/common/DetailModal';
+import { toast } from 'react-toastify';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Thêm state cho phân trang
+  const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   
   const pageSize = 10;
   
   useEffect(() => {
     loadCategories();
-  }, [currentPage, searchTerm, filter]); // Thêm dependencies
+  }, [currentPage, searchTerm, filter]);
   
   const loadCategories = async () => {
     setLoading(true);
+    setError('');
     try {
-      // Cập nhật API call để hỗ trợ phân trang
       const response = await fetchCategories({
         page: currentPage,
         pageSize,
         searchTerm,
-        filter: filter !== 'all' ? filter : null
+        filter: filter === 'all' ? null : filter
       });
       
       setCategories(response.data);
       setTotalPages(Math.ceil(response.total / pageSize));
-    } catch (error) {
-      console.error('Error loading categories:', error);
+    } catch (err) {
+      console.error('Lỗi khi tải danh mục:', err);
+      setError('Không thể tải danh mục. Vui lòng thử lại sau.');
+      toast.error('Không thể tải danh mục. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -53,28 +58,22 @@ const CategoriesPage = () => {
     try {
       await deleteCategory(categoryToDelete.id);
       setShowDeleteModal(false);
+      toast.success('Xóa danh mục thành công');
       loadCategories();
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Lỗi xóa danh mục:', error);
+      setError(error.message);
+      toast.error('Lỗi khi xóa danh mục: ' + error.message);
     }
   };
   
-  // Dữ liệu được lọc từ API nên không cần lọc lại ở frontend
-  const filteredCategories = categories;
+  const handleViewDetail = (category) => {
+    setSelectedCategory(category);
+    setShowDetailModal(true);
+  };
   
   const columns = [
     { header: 'ID', accessor: 'id' },
-    { 
-      header: 'Hình ảnh', 
-      accessor: 'image_url',
-      cell: (row) => row.image_url ? (
-        <img 
-          src={row.image_url} 
-          alt={row.name}
-          className="category-thumbnail" 
-        />
-      ) : <span className="no-image">Không có ảnh</span>
-    },
     { header: 'Tên danh mục', accessor: 'name' },
     { 
       header: 'Loại danh mục', 
@@ -103,12 +102,20 @@ const CategoriesPage = () => {
       accessor: 'actions',
       cell: (row) => (
         <div className="action-buttons">
-          <Link to={`/categories/edit/${row.id}`} className="btn-edit">
+          <button 
+            className="btn-view"
+            onClick={() => handleViewDetail(row)}
+            title="Xem chi tiết"
+          >
+            <i className="fas fa-eye"></i>
+          </button>
+          <Link to={`/categories/edit/${row.id}`} className="btn-edit" title="Chỉnh sửa">
             <i className="fas fa-edit"></i>
           </Link>
           <button 
             className="btn-delete"
             onClick={() => handleDeleteClick(row)}
+            title="Xóa"
           >
             <i className="fas fa-trash-alt"></i>
           </button>
@@ -161,18 +168,19 @@ const CategoriesPage = () => {
         </div>
       </div>
       
+      {error && <div className="error-message">{error}</div>}
+      
       {loading ? (
         <div className="loading">Đang tải dữ liệu...</div>
-      ) : filteredCategories.length === 0 ? (
+      ) : categories.length === 0 ? (
         <div className="no-data">Không tìm thấy danh mục nào</div>
       ) : (
         <>
           <Table 
             columns={columns} 
-            data={filteredCategories} 
+            data={categories} 
           />
           
-          {/* Thêm phân trang */}
           <Pagination 
             currentPage={currentPage}
             totalPages={totalPages}
@@ -188,6 +196,14 @@ const CategoriesPage = () => {
           warningMessage="Lưu ý: Việc xóa danh mục sẽ ảnh hưởng đến các sản phẩm thuộc danh mục này."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteModal(false)}
+        /> 
+      )}
+
+      {showDetailModal && selectedCategory && (
+        <DetailModal
+          title={`Chi tiết danh mục: ${selectedCategory.name}`}
+          item={selectedCategory}
+          onClose={() => setShowDetailModal(false)}
         />
       )}
     </div>

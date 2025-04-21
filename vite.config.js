@@ -16,6 +16,18 @@ export default defineConfig({
   server: {
     port: config.port,
     open: true,
+    // Thêm cấu hình proxy để kết nối với backend
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   },
   build: {
     outDir: config.outDir,

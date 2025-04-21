@@ -42,7 +42,11 @@ const BrandForm = ({ initialData, onSubmit, submitButtonText }) => {
     const newErrors = {};
     
     if (!formData.name?.trim()) newErrors.name = 'Tên thương hiệu không được để trống';
+    
+    // Chỉ kiểm tra logo có tồn tại, không kiểm tra URL hợp lệ
     if (!formData.logo?.trim()) newErrors.logo = 'Logo thương hiệu không được để trống';
+    
+    // Vẫn giữ kiểm tra website
     if (formData.website && !isValidUrl(formData.website)) 
       newErrors.website = 'Website phải là một URL hợp lệ';
     
@@ -107,6 +111,18 @@ const BrandForm = ({ initialData, onSubmit, submitButtonText }) => {
                 onChange={handleChange}
               />
               Hiển thị thương hiệu
+            </label>
+          </div>
+
+          <div className="form-row checkbox-row">
+            <label>
+              <input
+                type="checkbox"
+                name="is_featured"
+                checked={formData.is_featured || false}
+                onChange={handleChange}
+              />
+              Hiển thị ở phần "Thương hiệu nổi bật" trang chủ
             </label>
           </div>
         </div>

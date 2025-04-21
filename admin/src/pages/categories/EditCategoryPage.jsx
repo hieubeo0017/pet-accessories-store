@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchCategoryById, updateCategory } from '../../services/categoryService';
 import CategoryForm from '../../components/categories/CategoryForm';
 import PageHeader from '../../components/common/PageHeader';
+import { toast } from 'react-toastify'; // Thêm import này
 
 const EditCategoryPage = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const EditCategoryPage = () => {
       } catch (error) {
         console.error('Error loading category:', error);
         setError('Không thể tải thông tin danh mục');
+        toast.error('Không thể tải thông tin danh mục'); // Thêm thông báo lỗi
       } finally {
         setLoading(false);
       }
@@ -30,12 +32,16 @@ const EditCategoryPage = () => {
   
   const handleSubmit = async (formData) => {
     setUpdating(true);
+    setError('');
+    
     try {
       await updateCategory(id, formData);
+      toast.success('Cập nhật danh mục thành công!'); // Thêm thông báo thành công
       navigate('/categories');
     } catch (error) {
       console.error('Error updating category:', error);
       setError('Có lỗi xảy ra khi cập nhật danh mục');
+      toast.error('Có lỗi xảy ra khi cập nhật danh mục'); // Thêm thông báo lỗi
     } finally {
       setUpdating(false);
     }

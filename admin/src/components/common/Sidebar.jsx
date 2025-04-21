@@ -51,6 +51,23 @@ const Sidebar = ({ collapsed }) => {
               {!collapsed && <span>Đơn hàng</span>}
             </NavLink>
           </li>
+          
+          {/* Thêm liên kết đến quản lý dịch vụ spa */}
+          <li>
+            <NavLink to="/spa-services" className={({ isActive }) => isActive ? 'active' : ''}>
+              <i className="fas fa-spa"></i>
+              {!collapsed && <span>Dịch vụ Spa</span>}
+            </NavLink>
+          </li>
+          
+          {/* Thêm liên kết đến quản lý lịch hẹn spa */}
+          <li>
+            <NavLink to="/spa-appointments" className={({ isActive }) => isActive ? 'active' : ''}>
+              <i className="fas fa-calendar-check"></i>
+              {!collapsed && <span>Lịch hẹn Spa</span>}
+            </NavLink>
+          </li>
+          
           <li>
             <NavLink to="/reviews" className={({ isActive }) => isActive ? 'active' : ''}>
               <i className="fas fa-star"></i>

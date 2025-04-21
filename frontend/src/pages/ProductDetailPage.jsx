@@ -1,236 +1,271 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { fetchProductById, fetchProductsByCategory } from '../services/api';
 import { useDispatch } from 'react-redux';
-import ReviewSection from '../components/reviews/ReviewSection';
 import { addItem } from '../store/cartSlice';
+import { FaShoppingCart, FaArrowLeft, FaTag, FaPaw, FaInfo, FaShieldAlt, FaCheck } from 'react-icons/fa';
+import ReviewSection from '../components/reviews/ReviewSection';
+import ProductCard from '../components/products/ProductCard';
 import './ProductDetailPage.css';
 
 const ProductDetailPage = () => {
-    const { id } = useParams();
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1);
-    const [reviews, setReviews] = useState([]);
-    const dispatch = useDispatch();
-    
-    const increaseQuantity = () => {
-        setQuantity(prev => prev + 1);
-    };
-    
-    const decreaseQuantity = () => {
-        if (quantity > 1) {
-            setQuantity(prev => prev - 1);
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  
+  const [product, setProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  
+  // Tự động cuộn về đầu trang khi component được mount hoặc khi id thay đổi
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
+  
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchProductById(id);
+        
+        // Xử lý response dựa vào cấu trúc
+        let productData;
+        if (response.data) {
+          productData = response.data;
+        } else if (response.message && response.data) {
+          productData = response.data;
+        } else {
+          productData = response;
         }
-    };
-    
-    const handleAddToCart = () => {
-        if (product) {
-            dispatch(addItem({...product, quantity}));
-            alert('Đã thêm vào giỏ hàng!');
-        }
-    };
-
-    useEffect(() => {
-        const fetchProductDetails = async () => {
-            try {
-                // Trong thực tế, bạn sẽ gọi API để lấy dữ liệu
-                // Ở đây chúng ta sử dụng dữ liệu mẫu
-                const demoProducts = [
-                    {
-                        id: 101,
-                        name: 'Royal Canin Maxi Adult',
-                        petType: 'dog',
-                        brand: 'Royal Canin',
-                        price: 580000,
-                        description: 'Thức ăn hạt khô dành cho chó trưởng thành giống lớn',
-                        fullDescription: 'Royal Canin Maxi Adult là thức ăn được chế biến đặc biệt cho chó trưởng thành giống lớn (26-44kg) từ 15 tháng đến 8 tuổi. Công thức giúp duy trì khối lượng cơ bắp lý tưởng với hàm lượng protein phù hợp (25%) và lượng L-carnitine bổ sung.',
-                        usage: 'Cho ăn theo bảng hướng dẫn trên bao bì, điều chỉnh theo cân nặng và mức độ hoạt động của chó. Đảm bảo luôn có nước sạch.',
-                        ingredients: 'Protein gia cầm, gạo, mỡ động vật, ngô, protein thực vật, gluten ngô, bột mì, chất xơ thực vật, dầu cá, khoáng chất, men, vitamin...',
-                        nutritionalInfo: 'Protein: 25%, Chất béo: 14%, Xơ thô: 1.3%, Khoáng chất: 7%, Omega 3: 0.65%',
-                        weight: '10kg/bao',
-                        madeIn: 'Pháp',
-                        image: '/assets/images/products/royal-canin-food.jpg',
-                        images: [
-                            '/assets/images/products/royal-canin-food.jpg',
-                            '/assets/images/products/royal-canin-food-2.jpg',
-                            '/assets/images/products/royal-canin-food-3.jpg',
-                        ]
-                    },
-                    {
-                        id: 102,
-                        name: 'Pate Whiskas cho mèo',
-                        petType: 'cat',
-                        brand: 'Whiskas',
-                        price: 195000,
-                        description: 'Pate cho mèo vị cá ngừ và cá hồi',
-                        fullDescription: 'Whiskas Pate với công thức đặc biệt được thiết kế để đáp ứng nhu cầu dinh dưỡng của mèo. Với hương vị cá ngừ và cá hồi thơm ngon, sản phẩm giúp kích thích vị giác của mèo, đồng thời cung cấp các vitamin và khoáng chất thiết yếu.',
-                        usage: 'Chia thành 2-3 bữa mỗi ngày. Một con mèo trưởng thành (4kg) cần khoảng 3-4 gói/ngày. Bảo quản trong tủ lạnh sau khi mở và sử dụng trong vòng 24 giờ.',
-                        ingredients: 'Thịt và các sản phẩm từ động vật (bao gồm cá ngừ ít nhất 4%, cá hồi ít nhất 4%), các sản phẩm từ thực vật, khoáng chất, dầu và chất béo, vitamin...',
-                        nutritionalInfo: 'Protein: 8.5%, Chất béo: 4.5%, Tro thô: 2.5%, Xơ thô: 0.3%, Độ ẩm: 82%',
-                        weight: '85g/gói, 12 gói/hộp',
-                        madeIn: 'Thái Lan',
-                        image: '/assets/images/products/whiskas.jpg',
-                        images: [
-                            '/assets/images/products/whiskas.jpg',
-                            '/assets/images/products/whiskas-2.jpg',
-                            '/assets/images/products/whiskas-3.jpg',
-                        ]
-                    }
-                ];
-
-                const foundProduct = demoProducts.find(p => p.id === parseInt(id));
-                if (foundProduct) {
-                    setProduct(foundProduct);
-                }
-                
-                // Giả lập dữ liệu đánh giá
-                const demoReviews = [
-                    {
-                        id: 1,
-                        user_name: 'Nguyễn Văn A',
-                        rating: 5,
-                        comment: 'Sản phẩm rất tốt, chó nhà mình rất thích ăn. Lông mượt hơn, ít rụng.',
-                        created_at: '2025-03-15T08:30:00Z',
-                    },
-                    {
-                        id: 2,
-                        user_name: 'Trần Thị B',
-                        rating: 4,
-                        comment: 'Chất lượng sản phẩm tốt, nhưng giá hơi cao. Chó nhà mình ăn khỏe.',
-                        created_at: '2025-02-28T14:20:00Z',
-                        images: [
-                            { image_url: '/images/reviews/review1.jpg' }
-                        ]
-                    },
-                    {
-                        id: 3,
-                        user_name: 'Lê Văn C',
-                        rating: 3,
-                        comment: 'Sản phẩm tạm ổn. Bé nhà mình kén ăn nên phải mix với thức ăn khác.',
-                        created_at: '2025-02-10T09:45:00Z',
-                    }
-                ];
-                
-                // Chỉ hiển thị đánh giá nếu sản phẩm ID phù hợp
-                if (parseInt(id) === 101) {
-                    setReviews(demoReviews);
-                } else {
-                    setReviews([]);
-                }
-
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching product details:', error);
-                setLoading(false);
+        
+        setProduct(productData);
+        
+        // Thêm vào trong useEffect sau dòng setProduct(productData);
+        console.log('Dữ liệu sản phẩm:', productData);
+        console.log('Thông số kỹ thuật:', productData.specifications);
+        
+        // Tải sản phẩm liên quan
+        if (productData.category_id) {
+          const relatedResponse = await fetchProductsByCategory(
+            productData.category_id, 
+            { 
+              limit: 3,
+              exclude_id: productData.id
             }
-        };
-
-        fetchProductDetails();
-    }, [id]);
-
-    if (loading) {
-        return <div className="loading">Đang tải thông tin sản phẩm...</div>;
+          );
+          
+          if (relatedResponse.data && Array.isArray(relatedResponse.data)) {
+            setRelatedProducts(relatedResponse.data.slice(0, 3));
+          }
+        }
+        
+        setError(null);
+      } catch (error) {
+        console.error(`Error fetching product with id ${id}:`, error);
+        setError('Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProduct();
+    setSelectedImage(0);
+  }, [id]);
+  
+  const handleThumbnailClick = (index) => {
+    setSelectedImage(index);
+  };
+  
+  const increaseQuantity = () => {
+    if (quantity < (product?.stock || 1)) {
+      setQuantity(quantity + 1);
     }
-
-    if (!product) {
-        return <div className="error-message">Không tìm thấy thông tin sản phẩm</div>;
+  };
+  
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
     }
-
-    return (
-        <div className="product-detail-page">
-            <div className="product-gallery">
-                <div className="main-image">
-                    <img src={product.image} alt={product.name} />
-                </div>
-                {product.images && product.images.length > 1 && (
-                    <div className="thumbnail-images">
-                        {product.images.map((image, index) => (
-                            <img 
-                                key={index} 
-                                src={image} 
-                                alt={`${product.name} ${index + 1}`}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="product-details">
-                <h1>{product.name}</h1>
-                <p className="brand">Thương hiệu: <span>{product.brand}</span></p>
-                <p className="product-detail-price">{product.price.toLocaleString('vi-VN')}đ</p>
-
-                <div className="product-info-section">
-                    <h3>Mô tả sản phẩm</h3>
-                    <p>{product.fullDescription || product.description}</p>
-                </div>
-
-                <div className="product-info-section">
-                    <h3>Cách sử dụng</h3>
-                    <p>{product.usage || 'Đang cập nhật thông tin'}</p>
-                </div>
-
-                <div className="product-info-section">
-                    <h3>Thành phần</h3>
-                    <p>{product.ingredients || 'Đang cập nhật thông tin'}</p>
-                </div>
-
-                <div className="product-specs">
-                    <h3>Thông tin chi tiết</h3>
-                    <div className="specs-grid">
-                        <div className="spec-item">
-                            <span className="spec-label">Dành cho:</span>
-                            <span className="spec-value">{product.petType === 'dog' ? 'Chó' : 'Mèo'}</span>
-                        </div>
-                        <div className="spec-item">
-                            <span className="spec-label">Khối lượng:</span>
-                            <span className="spec-value">{product.weight || 'Đang cập nhật'}</span>
-                        </div>
-                        <div className="spec-item">
-                            <span className="spec-label">Xuất xứ:</span>
-                            <span className="spec-value">{product.madeIn || 'Đang cập nhật'}</span>
-                        </div>
-                        {product.nutritionalInfo && (
-                            <div className="spec-item">
-                                <span className="spec-label">Giá trị dinh dưỡng:</span>
-                                <span className="spec-value">{product.nutritionalInfo}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="purchase-options">
-                    <div className="quantity-selector">
-                        <button onClick={decreaseQuantity}>-</button>
-                        <span>{quantity}</span>
-                        <button onClick={increaseQuantity}>+</button>
-                    </div>
-                    <button className="add-to-cart-button" onClick={handleAddToCart}>
-                        Thêm vào giỏ hàng
-                    </button>
-                </div>
-            </div>
-            
-            <div className="product-extra-info">
-                <div className="delivery-info">
-                    <h3><i className="fas fa-truck"></i> Thông tin vận chuyển</h3>
-                    <p>Giao hàng toàn quốc, miễn phí vận chuyển cho đơn hàng trên 500.000đ</p>
-                </div>
-                
-                <div className="guarantee-info">
-                    <h3><i className="fas fa-shield-alt"></i> Cam kết</h3>
-                    <p>Sản phẩm chính hãng 100%, đổi trả trong vòng 7 ngày nếu sản phẩm lỗi</p>
-                </div>
-                     {/* Thêm phần đánh giá ở đây */}
-                <ReviewSection 
-                itemType="product" 
-                itemId={id} 
-                reviews={reviews}
-                />
-
-            </div>
+  };
+  
+  const handleAddToCart = () => {
+    if (product && product.stock > 0) {
+      const primaryImage = product.images?.find(img => img.is_primary)?.image_url || product.images?.[0]?.image_url || '';
+      
+      dispatch(addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: primaryImage,
+        quantity,
+        type: 'product'
+      }));
+    }
+  };
+  
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '/images/placeholder-product.jpg';
+    
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    } else {
+      return `http://localhost:5000${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+    }
+  };
+  
+  if (loading) return <div className="loading">Đang tải thông tin sản phẩm...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!product) return <div className="error">Không tìm thấy sản phẩm</div>;
+  
+  // Tính giá sau khuyến mãi
+  const discountedPrice = product.discount > 0 
+    ? product.price * (1 - product.discount / 100) 
+    : null;
+  
+  const images = product.images || [];
+  
+  return (
+    <div className="product-detail-page">
+      <div className="product-gallery">
+        <div className="main-image">
+          <img 
+            src={images.length > 0 ? getImageUrl(images[selectedImage].image_url) : '/images/placeholder-product.jpg'} 
+            alt={product.name}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/placeholder-product.jpg';
+            }}
+          />
+          {product.discount > 0 && (
+            <div className="discount-badge">-{product.discount}%</div>
+          )}
         </div>
-    );
+        
+        <div className="thumbnail-images">
+          {images.map((image, index) => (
+            <img 
+              key={index} 
+              src={getImageUrl(image.image_url)}
+              alt={`${product.name} ${index+1}`}
+              onClick={() => handleThumbnailClick(index)}
+              className={selectedImage === index ? 'active' : ''}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/images/placeholder-product.jpg';
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      <div className="product-details">
+        <div className="product-header">
+          <h1>{product.name}</h1>
+          <p className="product-id">Mã: {product.id}</p>
+        </div>
+        
+        <div className="product-price">
+          {discountedPrice ? (
+            <>
+              <span className="price">{Math.floor(discountedPrice).toLocaleString('vi-VN')}đ</span>
+              <span className="original-price">{product.price.toLocaleString('vi-VN')}đ</span>
+            </>
+          ) : (
+            <span className="price">{product.price.toLocaleString('vi-VN')}đ</span>
+          )}
+        </div>
+        
+        <div className="product-attributes">
+          <div className="attribute">
+            <span className="label">Loại thú cưng:</span>
+            <span className="value">{product.pet_type === 'dog' ? 'Chó' : product.pet_type === 'cat' ? 'Mèo' : 'Tất cả'}</span>
+          </div>
+          {product.brand_name && (
+            <div className="attribute">
+              <span className="label">Thương hiệu:</span>
+              <span className="value">{product.brand_name}</span>
+            </div>
+          )}
+          <div className="attribute">
+            <span className="label">Danh mục:</span>
+            <span className="value">{product.category_name || 'Chưa phân loại'}</span>
+          </div>
+          <div className="attribute">
+            <span className="label">Tình trạng:</span>
+            <span className="value">{product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}</span>
+          </div>
+        </div>
+        
+        <div className="product-description-box">
+          <h3 className="description-label">Mô tả sản phẩm:</h3>
+          <div className="description-content">{product.description || 'Chưa có mô tả cho sản phẩm này'}</div>
+        </div>
+        
+        {product.specifications && product.specifications.length > 0 && (
+          <div className="health-info">
+            <h3>Thông số kỹ thuật:</h3>
+            {product.specifications.map((spec, index) => (
+              <p key={index}>
+                <strong>{spec.spec_name || spec.name || ''}:</strong> {spec.spec_value || spec.value || ''}
+              </p>
+            ))}
+          </div>
+        )}
+        
+        {product.stock > 0 && (
+          <div className="purchase-options">
+            <div className="quantity-selector">
+              <button onClick={decreaseQuantity} disabled={quantity <= 1}>-</button>
+              <span>{quantity}</span>
+              <button onClick={increaseQuantity} disabled={quantity >= product.stock}>+</button>
+            </div>
+            <button 
+              className="contact-button" 
+              onClick={handleAddToCart}
+            >
+              <FaShoppingCart /> Thêm vào giỏ hàng
+            </button>
+          </div>
+        )}
+        
+        {product.stock <= 0 && (
+          <div className="out-of-stock-message">
+            <p>Sản phẩm này hiện đã hết hàng</p>
+          </div>
+        )}
+      </div>
+      
+      <div className="extra-info">
+        <div className="guarantee-section">
+          <h3><FaShieldAlt className="info-icon" /> Cam kết và bảo hành</h3>
+          <p>Sản phẩm chính hãng 100%, còn nguyên tem mác</p>
+          <ul className="extra-features">
+            <li><FaCheck /> Bảo hành theo chính sách của nhà sản xuất</li>
+            <li><FaCheck /> Đổi trả trong vòng 7 ngày nếu sản phẩm lỗi</li>
+            <li><FaCheck /> Tư vấn sử dụng sản phẩm miễn phí</li>
+          </ul>
+        </div>
+      </div>
+      
+      <ReviewSection 
+        itemType="product" 
+        itemId={id}
+      />
+      
+      {relatedProducts.length > 0 && (
+        <div className="similar-pets-section">
+          <h2>Sản phẩm tương tự</h2>
+          <div className="similar-pets-container">
+            {relatedProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default ProductDetailPage;

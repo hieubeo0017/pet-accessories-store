@@ -25,6 +25,16 @@ import BrandsPage from './pages/brands/BrandsPage';
 import AddBrandPage from './pages/brands/AddBrandPage';
 import EditBrandPage from './pages/brands/EditBrandPage';
 
+// Spa service management
+import SpaServicesPage from './pages/spa-services/SpaServicesPage';
+import AddSpaServicesPage from './pages/spa-services/AddSpaServicesPage'; // Sửa tên file thành số nhiều
+import EditSpaServicesPage from './pages/spa-services/EditSpaServicesPage'; // Cũng kiểm tra tên này nếu cần
+
+// Spa appointment management
+import SpaAppointmentsPage from './pages/spa-appointments/SpaAppointmentsPage';
+import SpaAppointmentDetailPage from './pages/spa-appointments/SpaAppointmentDetailPage';
+import AddSpaAppointmentPage from "./pages/spa-appointments/AddSpaAppointmentPage"; // Thêm import cho trang mới
+
 // Error page
 import NotFound from './pages/NotFound';
 
@@ -60,6 +70,20 @@ function App() {
           <Route index element={<BrandsPage />} />
           <Route path="add" element={<AddBrandPage />} />
           <Route path="edit/:id" element={<EditBrandPage />} />
+        </Route>
+        
+        {/* Spa service management */}
+        <Route path="spa-services">
+          <Route index element={<SpaServicesPage />} />
+          <Route path="add" element={<AddSpaServicesPage />} />
+          <Route path="edit/:id" element={<EditSpaServicesPage />} />
+        </Route>
+        
+        {/* Spa appointment management */}
+        <Route path="spa-appointments">
+          <Route index element={<SpaAppointmentsPage />} />
+          <Route path="add" element={<AddSpaAppointmentPage />} /> {/* Thêm route trong phần <Routes> */}
+          <Route path=":id" element={<SpaAppointmentDetailPage />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />

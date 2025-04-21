@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import './Header.css';
 
 const Header = ({ toggleSidebar }) => {
@@ -24,7 +25,7 @@ const Header = ({ toggleSidebar }) => {
         </div>
         
         <div className="header-user">
-          <img src="images/avatar-placeholder.png" alt="User Avatar" className="user-avatar" />
+          <img src="/images/avatar-placeholder.png" alt="User Avatar" className="user-avatar" />
           <div className="user-info">
             <span className="user-name">Admin</span>
             <button className="logout-button">
