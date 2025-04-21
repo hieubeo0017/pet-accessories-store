@@ -1,109 +1,124 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { addItem } from '../../store/cartSlice';
+import { fetchFeaturedProducts } from '../../services/api';
+import DetailModal from '../common/DetailModal';
 import './FoodAndAccessories.css';
 
 const FoodAndAccessories = () => {
-    const dispatch = useDispatch();
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
-    const handleAddToCart = (product) => {
-        dispatch(addItem(product));
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchFeaturedProducts({
+          limit: 8 // Lấy tối đa 8 sản phẩm nổi bật
+        });
+        
+        setFeaturedProducts(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading featured products:', err);
+        setError('Không thể tải dữ liệu sản phẩm nổi bật');
+      } finally {
+        setLoading(false);
+      }
     };
+    
+    loadFeaturedProducts();
+  }, []);
 
-    // Dữ liệu thức ăn và phụ kiện
-    const productsData = [
-        // Thức ăn
-        { 
-            id: 301, 
-            name: 'Royal Canin Maxi Adult', 
-            type: 'food',
-            category: 'Thức ăn cho chó',
-            price: 580000, 
-            image: '/images/products/royal-canin-food.jpg', 
-            discounted: true,
-            oldPrice: 650000,
-            description: 'Thức ăn hạt cao cấp cho chó trưởng thành giống lớn, cân bằng dinh dưỡng, tăng cường sức khỏe xương khớp.'
-        },
-        { 
-            id: 302, 
-            name: 'Pate Whiskas cho mèo', 
-            type: 'food',
-            category: 'Thức ăn cho mèo',
-            price: 195000, 
-            image: '/images/products/whiskas.jpg',
-            discounted: false,
-            description: 'Pate mềm vị cá ngừ và cá hồi, bổ sung vitamin và khoáng chất thiết yếu cho mèo mọi lứa tuổi.'
-        },
-        // Phụ kiện
-        { 
-            id: 401, 
-            name: 'Vòng cổ cho chó', 
-            type: 'accessory',
-            category: 'Phụ kiện',
-            price: 120000, 
-            image: '/images/products/dog-collar.jpg', 
-            discounted: false,
-            description: 'Vòng cổ cao cấp chất liệu da an toàn, dễ điều chỉnh kích cỡ, có thể khắc tên theo yêu cầu.'
-        },
-        { 
-            id: 402, 
-            name: 'Bát ăn đôi cho mèo', 
-            type: 'accessory',
-            category: 'Phụ kiện',
-            price: 90000, 
-            image: '/images/products/cat-bowl.jpg',
-            discounted: true,
-            oldPrice: 150000,
-            description: 'Bát ăn đôi thiết kế thông minh, chống trượt, dễ vệ sinh, phù hợp cho mèo ăn thức ăn khô và ướt.'
-        }
-    ];
+  const openModal = (productId) => {
+    setSelectedProductId(productId);
+    setModalOpen(true);
+  };
 
-    return (
-        <section className="accessories-showcase">
-            <h2 className="section-title">Thức Ăn & Phụ Kiện Thú Cưng</h2>
-            <div className="accessories-description">
-                <p>Sản phẩm chất lượng cao từ các thương hiệu uy tín</p>
-            </div>
+  if (loading) {
+    return <div className="loading">Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  if (featuredProducts.length === 0) {
+    return null;
+  }
+  
+  return (
+    <>
+      <section className="category-showcase">
+        <h2 className="section-title">Thức Ăn & Phụ Kiện Thú Cưng</h2>
+        <div className="category-grid">
+          {featuredProducts.map(product => {
+            const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
+            const imageUrl = primaryImage?.image_url || '/images/default-product.jpg';
             
-            <div className="accessories-grid">
-                {productsData.map(item => (
-                    <div key={item.id} className="accessory-card">
-                        <div className="accessory-image">
-                            <img src={item.image} alt={item.name} />
-                            {item.discounted && <span className="discount-tag">Giảm giá</span>}
-                            <span className="category-tag">{item.category}</span>
-                            <div className="accessory-actions">
-                                <button 
-                                    className="add-to-cart"
-                                    onClick={() => handleAddToCart(item)}
-                                >
-                                    Thêm vào giỏ
-                                </button>
-                            </div>
-                        </div>
-                        <div className="accessory-info">
-                            <Link to={`/product/${item.id}`} className="accessory-name">
-                                {item.name}
-                            </Link>
-                            <p className="accessory-description">{item.description}</p>
-                            <div className="accessory-price">
-                                {item.discounted && (
-                                    <span className="old-price">{item.oldPrice.toLocaleString('vi-VN')}đ</span>
-                                )}
-                                <span className="current-price">{item.price.toLocaleString('vi-VN')}đ</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            
-            <div className="view-more">
-                <Link to="/foods" className="view-more-btn">Xem thức ăn</Link>
-                <Link to="/accessories" className="view-more-btn">Xem phụ kiện</Link>
-            </div>
-        </section>
-    );
+            // Tính giá sau giảm giá
+            const discountedPrice = product.discount > 0 
+              ? product.price * (1 - product.discount / 100) 
+              : product.price;
+              
+            return (
+              <div key={product.id} className="category-card">
+                <div className="category-image">
+                  <img 
+                    src={imageUrl} 
+                    alt={product.name} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/images/default-product.jpg';
+                    }}
+                  />
+                  {product.discount > 0 && (
+                    <span className="discount-badge">-{product.discount}%</span>
+                  )}
+                  <div className="category-actions">
+                    <button 
+                      className="view-details"
+                      onClick={() => openModal(product.id)}
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
+                </div>
+                <div className="category-info">
+                  <button 
+                    className="category-name-button"
+                    onClick={() => openModal(product.id)}
+                  >
+                    {product.name}
+                  </button>
+                  <p className="category-description">{product.category_name}</p>
+                  <p className="category-price">
+                    {product.discount > 0 && (
+                      <span className="original-price">{product.price.toLocaleString('vi-VN')}đ</span>
+                    )}
+                    <span>{discountedPrice.toLocaleString('vi-VN')}đ</span>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="view-more">
+          <Link to="/products" className="view-more-btn">Xem tất cả sản phẩm</Link>
+        </div>
+      </section>
+      
+      {/* Detail Modal */}
+      <DetailModal 
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        itemId={selectedProductId}
+        itemType="product"
+      />
+    </>
+  );
 };
 
 export default FoodAndAccessories;

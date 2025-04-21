@@ -1,0 +1,197 @@
+.spa-appointment-detail .panel-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.spa-appointment-detail .panel-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 18px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.spa-appointment-detail .info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.spa-appointment-detail .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.spa-appointment-detail .info-item.full-width {
+  grid-column: span 2;
+}
+
+.spa-appointment-detail .label {
+  font-weight: 500;
+  color: #666;
+  font-size: 14px;
+}
+
+.spa-appointment-detail .value {
+  font-size: 16px;
+}
+
+.spa-appointment-detail .value.price {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.spa-appointment-detail .action-controls {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.spa-appointment-detail .status-controls,
+.spa-appointment-detail .payment-controls {
+  flex: 1;
+}
+
+.spa-appointment-detail .action-controls h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+}
+
+.spa-appointment-detail .button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.spa-appointment-detail .btn-status,
+.spa-appointment-detail .btn-payment {
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.spa-appointment-detail .btn-status.pending {
+  background-color: #FFC107;
+  color: #212121;
+}
+
+.spa-appointment-detail .btn-status.confirmed {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.spa-appointment-detail .btn-status.completed {
+  background-color: #2196F3;
+  color: white;
+}
+
+.spa-appointment-detail .btn-status.cancelled {
+  background-color: #F44336;
+  color: white;
+}
+
+.spa-appointment-detail .btn-payment.paid {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.spa-appointment-detail .btn-payment.unpaid {
+  background-color: #F44336;
+  color: white;
+}
+
+.spa-appointment-detail .service-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.spa-appointment-detail .service-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+}
+
+.spa-appointment-detail .service-list li:last-child {
+  border-bottom: none;
+}
+
+.spa-appointment-detail .service-name {
+  font-weight: 500;
+}
+
+.spa-appointment-detail .service-price {
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.spa-appointment-detail .notes-section {
+  background-color: #f9f9f9;
+  border-left: 4px solid #1976d2;
+  padding: 10px 15px;
+  margin-top: 10px;
+}
+
+.spa-appointment-detail .history-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.spa-appointment-detail .history-item:last-child {
+  border-bottom: none;
+}
+
+.spa-appointment-detail .history-date {
+  color: #666;
+  font-size: 13px;
+}
+
+.spa-appointment-detail .history-action {
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.spa-appointment-detail .badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+.spa-appointment-detail .badge.pending {
+  background-color: #FFF8E1;
+  color: #FF8F00;
+  border: 1px solid #FFE082;
+}
+
+.spa-appointment-detail .badge.confirmed {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+}
+
+.spa-appointment-detail .badge.completed {
+  background-color: #E3F2FD;
+  color: #1565C0;
+  border: 1px solid #BBDEFB;
+}
+
+.spa-appointment-detail .badge.cancelled {
+  background-color: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}

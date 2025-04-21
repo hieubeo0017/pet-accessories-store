@@ -161,6 +161,20 @@ body {
   background-color: rgba(244, 67, 54, 0.1);
 }
 
+.btn-view {
+  color: var(--info-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.btn-view:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
 /* Status badges */
 .status-badge {
   display: inline-flex;
@@ -466,4 +480,15 @@ body {
   padding: 12px;
   border-radius: 4px;
   margin-top: 12px;
+}
+
+.status-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.status-badge.featured {
+  background-color: #FFA000;
+  color: white;
 }

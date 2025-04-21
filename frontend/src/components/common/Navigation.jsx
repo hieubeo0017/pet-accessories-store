@@ -1,22 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import './Navigation.css';
 
 const Navigation = () => {
-    return (
-        <nav className="navigation">
-            <div className="navigation-container">
-                <ul>
-                    <li><Link to="/">Trang chủ</Link></li>
-                    <li><Link to="/pets">Thú cưng</Link></li>
-                    <li><Link to="/foods">Thức ăn</Link></li>
-                    <li><Link to="/accessories">Phụ kiện</Link></li>
-                    <li><Link to="/blog">Blog</Link></li>
-                    <li><Link to="/contact">Liên hệ</Link></li>
-                </ul>
-            </div>
-        </nav>
-    );
+  return (
+    <nav className="navigation">
+      <div className="navigation-container">
+        <ul>
+          <li><NavLink to="/" end>Trang chủ</NavLink></li>
+          <li><NavLink to="/pets?type=dog">Chó cảnh</NavLink></li>
+          <li><NavLink to="/pets?type=cat">Mèo cảnh</NavLink></li>
+          <li><NavLink to="/foods">Thức ăn</NavLink></li>
+          <li><NavLink to="/category/accessories">Phụ kiện</NavLink></li>
+          <li><NavLink to="/spa">Spa & Chăm sóc</NavLink></li>
+          <li><NavLink to="/blogs">Tin tức</NavLink></li>
+          <li><NavLink to="/contact">Liên hệ</NavLink></li>
+        </ul>
+      </div>
+    </nav>
+  );
 };
 
 export default Navigation;

@@ -1,117 +1,94 @@
-// Dữ liệu mẫu
-const brandsData = [
-  {
-    id: 1,
-    name: 'Royal Canin',
-    logo: 'https://cdn.royalcanin-weshare-online.io/UCImG2oBaxEApS7LuQnZ/v2/rc-logo-global-600-600-golden-ratio',
-    description: 'Royal Canin là thương hiệu thức ăn cho thú cưng từ Pháp, nổi tiếng với công thức dinh dưỡng được nghiên cứu kỹ lưỡng.',
-    website: 'https://www.royalcanin.com',
-    is_active: true
-  },
-  {
-    id: 2,
-    name: 'Whiskas',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Whiskas_logo.svg/1200px-Whiskas_logo.svg.png',
-    description: 'Whiskas là thương hiệu thức ăn cho mèo nổi tiếng toàn cầu với nhiều loại thức ăn đa dạng.',
-    website: 'https://www.whiskas.com',
-    is_active: true
-  },
-  {
-    id: 3,
-    name: 'Pedigree',
-    logo: 'https://logos-world.net/wp-content/uploads/2021/08/Pedigree-Logo.png',
-    description: 'Pedigree là thương hiệu thức ăn cho chó hàng đầu, cung cấp đa dạng các sản phẩm dinh dưỡng.',
-    website: 'https://www.pedigree.com',
-    is_active: true
-  }
-];
+import axios from 'axios';
 
+const API_URL = 'http://localhost:5000/api';
+
+// Lấy danh sách thương hiệu với phân trang và lọc
 export const fetchBrands = async ({ page = 1, pageSize = 10, searchTerm = '' } = {}) => {
   try {
-    // Lọc dữ liệu dựa trên searchTerm
-    let filteredBrands = [...brandsData];
-    
-    if (searchTerm) {
-      filteredBrands = filteredBrands.filter(brand => 
-        brand.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Tính toán phân trang
-    const total = filteredBrands.length;
-    const startIndex = (page - 1) * pageSize;
-    const paginatedBrands = filteredBrands.slice(startIndex, startIndex + pageSize);
-    
+    const response = await axios.get(`${API_URL}/brands`, {
+      params: {
+        page,
+        limit: pageSize,
+        search: searchTerm,
+        sortBy: 'id',
+        sortOrder: 'desc'  // Thay đổi từ 'asc' thành 'desc' để sắp xếp giảm dần
+      }
+    });
+
     return {
-      data: paginatedBrands,
-      total: total,
-      page: page,
-      pageSize: pageSize
+      data: response.data.data,
+      total: response.data.pagination.totalItems,
+      page: response.data.pagination.page,
+      pageSize: response.data.pagination.limit,
+      totalPages: response.data.pagination.totalPages
     };
   } catch (error) {
-    throw new Error('Failed to fetch brands');
+    console.error('Error fetching brands:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch brands');
   }
 };
 
 // Lấy thương hiệu theo ID
 export const fetchBrandById = async (id) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const brand = brandsData.find(brand => brand.id === Number(id));
-      if (brand) {
-        resolve({...brand});
-      } else {
-        reject(new Error('Không tìm thấy thương hiệu'));
-      }
-    }, 500);
-  });
+  try {
+    const response = await axios.get(`${API_URL}/brands/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching brand:', error);
+    throw new Error(error.response?.data?.message || 'Không tìm thấy thương hiệu');
+  }
 };
 
 // Tạo thương hiệu mới
 export const createBrand = async (brandData) => {
-  // Giả lập call API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newBrand = {
-        id: brandsData.length + 1,
-        ...brandData,
-        created_at: new Date().toISOString()
-      };
-      brandsData.push(newBrand);
-      resolve(newBrand);
-    }, 500);
-  });
+  try {
+    console.log('Dữ liệu gửi đi:', brandData); // Debug dữ liệu gửi đi
+    const response = await axios.post(`${API_URL}/brands`, brandData);
+    return response.data;
+  } catch (error) {
+    console.error('Chi tiết lỗi từ server:', error.response?.data);
+    
+    // Lấy lỗi chi tiết từ validation errors
+    if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+      throw new Error(error.response.data.errors.map(e => e.msg).join(', '));
+    }
+    
+    // Lấy message từ server
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    
+    // Lấy error từ server
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    
+    throw new Error('Không thể tạo thương hiệu mới');
+  }
 };
 
 // Cập nhật thương hiệu
 export const updateBrand = async (id, brandData) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = brandsData.findIndex(brand => brand.id === Number(id));
-      if (index !== -1) {
-        brandsData[index] = { ...brandsData[index], ...brandData };
-        resolve(brandsData[index]);
-      } else {
-        reject(new Error('Không tìm thấy thương hiệu'));
-      }
-    }, 500);
-  });
+  try {
+    const response = await axios.put(`${API_URL}/brands/${id}`, brandData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating brand:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update brand');
+  }
 };
 
 // Xóa thương hiệu
 export const deleteBrand = async (id) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = brandsData.findIndex(brand => brand.id === Number(id));
-      if (index !== -1) {
-        brandsData.splice(index, 1);
-        resolve({ success: true });
-      } else {
-        reject(new Error('Không tìm thấy thương hiệu'));
-      }
-    }, 500);
-  });
+  try {
+    await axios.delete(`${API_URL}/brands/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting brand:', error);
+    if (error.response?.status === 400) {
+      // Thương hiệu đang được sử dụng bởi sản phẩm
+      throw new Error(error.response?.data?.message || 'Không thể xóa thương hiệu đang được sử dụng');
+    }
+    throw new Error(error.response?.data?.message || 'Failed to delete brand');
+  }
 };

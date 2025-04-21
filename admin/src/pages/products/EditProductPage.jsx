@@ -4,6 +4,7 @@ import { fetchProductById, updateProduct } from '../../services/productService';
 import { fetchCategories } from '../../services/categoryService';
 import { fetchBrands } from '../../services/brandService';
 import ProductForm from '../../components/products/ProductForm';
+import { toast } from 'react-toastify';
 
 const EditProductPage = () => {
   const { id } = useParams();
@@ -18,17 +19,21 @@ const EditProductPage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Lấy dữ liệu sản phẩm
-        const productData = await fetchProductById(id);
-        setProduct(productData);
+        await loadProduct();
         
-        // Lấy danh sách danh mục và thương hiệu (không cần tham số phân trang)
-        const categoriesResponse = await fetchCategories({});
-        const brandsResponse = await fetchBrands({});
+        // Lấy danh sách danh mục và thương hiệu với pageSize lớn để lấy tất cả
+        const [categoriesRes, brandsRes] = await Promise.all([
+          fetchCategories({ pageSize: 1000 }),
+          fetchBrands({ pageSize: 1000 })
+        ]);
+
+        // Lọc danh mục theo type tại client
+        const filteredCategories = categoriesRes.data.filter(
+          category => category.type === 'food' || category.type === 'accessory'
+        );
         
-        // Đảm bảo categoriesResponse và brandsResponse có thuộc tính data
-        setCategories(categoriesResponse.data || []);
-        setBrands(brandsResponse.data || []);
+        setCategories(filteredCategories);
+        setBrands(brandsRes.data || []);
       } catch (error) {
         console.error('Error loading product data:', error);
         setError('Không thể tải dữ liệu sản phẩm: ' + error.message);
@@ -40,14 +45,58 @@ const EditProductPage = () => {
     loadData();
   }, [id]);
   
+  const loadProduct = async () => {
+    setLoading(true);
+    try {
+      const response = await fetchProductById(id);
+      
+      // Xử lý specifications nếu nó được lưu dưới dạng chuỗi JSON
+      if (response.specifications && typeof response.specifications === 'string') {
+        try {
+          response.specifications = JSON.parse(response.specifications);
+        } catch (e) {
+          console.error('Lỗi khi parse specifications:', e);
+          response.specifications = [];
+        }
+      }
+      
+      // Đảm bảo specifications luôn là một mảng
+      if (!response.specifications) {
+        response.specifications = [];
+      }
+      
+      // Xử lý dữ liệu hình ảnh để đảm bảo chỉ có một ảnh chính
+      if (response.images && response.images.length > 0) {
+        // Tìm ảnh đầu tiên có is_primary = true
+        const primaryIndex = response.images.findIndex(img => img.is_primary);
+        
+        // Đảm bảo chỉ có một ảnh được đánh dấu là chính
+        response.images = response.images.map((img, index) => ({
+          ...img,
+          url: img.image_url || img.url,
+          is_primary: primaryIndex !== -1 ? index === primaryIndex : index === 0
+        }));
+      }
+      
+      setProduct(response);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading product:', error);
+      toast.error('Không thể tải thông tin sản phẩm');
+      setLoading(false);
+    }
+  };
+  
   const handleSubmit = async (productData) => {
     setUpdating(true);
     try {
       await updateProduct(id, productData);
+      toast.success('Cập nhật sản phẩm thành công'); // Thêm thông báo thành công
       navigate('/products');
     } catch (error) {
       console.error('Error updating product:', error);
       setError('Lỗi khi cập nhật sản phẩm: ' + error.message);
+      toast.error('Lỗi khi cập nhật sản phẩm: ' + error.message); // Thêm thông báo lỗi
     } finally {
       setUpdating(false);
     }

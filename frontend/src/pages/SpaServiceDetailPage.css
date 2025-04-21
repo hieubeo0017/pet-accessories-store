@@ -1,0 +1,217 @@
+.spa-service-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.service-detail-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 30px;
+}
+
+/* Phần hình ảnh dịch vụ */
+.service-image-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.service-detail-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.service-image-container:hover .service-detail-image {
+  transform: scale(1.03);
+}
+
+/* Phần thông tin dịch vụ */
+.service-detail-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-detail-info h1 {
+  font-size: 28px;
+  color: var(--secondary-color);
+  margin-bottom: 20px;
+}
+
+/* Thẻ tags */
+.service-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.service-tag {
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+}
+
+.tag-pet-type {
+  background-color: #e3f2fd;
+  color: var(--primary-color);
+}
+
+.tag-duration {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.tag-size {
+  background-color: #ede7f6;
+  color: #6200ea;
+}
+
+/* Giá dịch vụ */
+.service-price {
+  margin: 20px 0;
+}
+
+.price-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+/* Mô tả dịch vụ */
+.service-description {
+  margin: 20px 0;
+}
+
+.service-description h3 {
+  font-size: 20px;
+  color: var(--secondary-color);
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.service-description h3:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 50px;
+  height: 3px;
+  background-color: var(--primary-color);
+}
+
+.service-description p {
+  line-height: 1.8;
+  color: #444;
+  font-size: 16px;
+}
+
+/* Nút đặt lịch */
+.book-service-btn {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 14px 30px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  text-decoration: none;
+  border: none;
+}
+
+.book-service-btn:hover {
+  background-color: var(--button-hover-color);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Trạng thái loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e3f2fd;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading p {
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+/* Thông báo lỗi */
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  margin: 40px auto;
+  max-width: 600px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .service-detail-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .service-detail-image {
+    height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  .service-detail-container {
+    padding: 20px;
+  }
+  
+  .service-detail-info h1 {
+    font-size: 24px;
+  }
+  
+  .service-detail-image {
+    height: 250px;
+  }
+  
+  .service-description h3 {
+    font-size: 18px;
+  }
+  
+  .price-value {
+    font-size: 24px;
+  }
+  
+  .book-service-btn {
+    width: 100%;
+  }
+}

@@ -5,6 +5,8 @@ import Table from '../../components/common/Table';
 import SearchBar from '../../components/common/SearchBar';
 import Pagination from '../../components/common/Pagination';
 import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
+import DetailModal from '../../components/common/DetailModal';
+import { toast } from 'react-toastify';
 
 const BrandsPage = () => {
   const [brands, setBrands] = useState([]);
@@ -13,30 +15,46 @@ const BrandsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [brandToDelete, setBrandToDelete] = useState(null);
   
-  // Thêm state cho phân trang
+  // State cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
   const pageSize = 10;
+
+  // State cho modal chi tiết
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState(null);
   
+  // Debounce cho tìm kiếm
   useEffect(() => {
-    loadBrands();
-  }, [currentPage, searchTerm]); // Thêm dependencies
+    const timer = setTimeout(() => {
+      loadBrands();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [currentPage, searchTerm]);
   
   const loadBrands = async () => {
     setLoading(true);
     try {
-      // Cập nhật API call để hỗ trợ phân trang
       const response = await fetchBrands({
         page: currentPage,
         pageSize,
         searchTerm
       });
       
+      console.log("Brands data:", response.data); 
+      console.log("Featured status:", response.data.map(b => ({
+        id: b.id, 
+        name: b.name, 
+        is_featured: b.is_featured
+      })));
+      
       setBrands(response.data);
-      setTotalPages(Math.ceil(response.total / pageSize));
+      setTotalPages(response.totalPages);
     } catch (error) {
       console.error('Error loading brands:', error);
+      toast.error('Không thể tải dữ liệu thương hiệu');
     } finally {
       setLoading(false);
     }
@@ -51,14 +69,18 @@ const BrandsPage = () => {
     try {
       await deleteBrand(brandToDelete.id);
       setShowDeleteModal(false);
+      toast.success('Xóa thương hiệu thành công');
       loadBrands();
     } catch (error) {
       console.error('Error deleting brand:', error);
+      toast.error(error.message || 'Lỗi khi xóa thương hiệu');
     }
   };
-  
-  // Dữ liệu được lọc từ API nên không cần lọc lại ở frontend
-  const filteredBrands = brands;
+
+  const handleViewDetail = (brand) => {
+    setSelectedBrand(brand);
+    setShowDetailModal(true);
+  };
   
   const columns = [
     { header: 'ID', accessor: 'id' },
@@ -66,22 +88,27 @@ const BrandsPage = () => {
       header: 'Logo', 
       accessor: 'logo',
       cell: (row) => (
-        <img 
-          src={row.logo} 
-          alt={row.name}
-          className="brand-logo" 
-        />
+        <img src={row.logo} alt={row.name} className="brand-logo" />
       )
     },
     { header: 'Tên thương hiệu', accessor: 'name' },
-    { header: 'Website', accessor: 'website' },
+    { header: 'Website', accessor: 'website', cell: (row) => (
+      row.website ? <a href={row.website} target="_blank" rel="noopener noreferrer">{row.website}</a> : '-'
+    )},
     { 
       header: 'Trạng thái', 
       accessor: 'is_active',
       cell: (row) => (
-        <span className={`status-badge ${row.is_active ? 'active' : 'inactive'}`}>
-          {row.is_active ? 'Hiển thị' : 'Ẩn'}
-        </span>
+        <div className="status-badges">
+          <span className={`status-badge ${row.is_active ? 'active' : 'inactive'}`}>
+            {row.is_active ? 'Hiển thị' : 'Ẩn'}
+          </span>
+          {row.is_featured && (
+            <span className="status-badge featured">
+              <i className="fas fa-star"></i> Nổi bật
+            </span>
+          )}
+        </div>
       )
     },
     {
@@ -89,12 +116,20 @@ const BrandsPage = () => {
       accessor: 'actions',
       cell: (row) => (
         <div className="action-buttons">
-          <Link to={`/brands/edit/${row.id}`} className="btn-edit">
+          <button 
+            className="btn-view"
+            onClick={() => handleViewDetail(row)}
+            title="Xem chi tiết"
+          >
+            <i className="fas fa-eye"></i>
+          </button>
+          <Link to={`/brands/edit/${row.id}`} className="btn-edit" title="Chỉnh sửa">
             <i className="fas fa-edit"></i>
           </Link>
           <button 
             className="btn-delete"
             onClick={() => handleDeleteClick(row)}
+            title="Xóa"
           >
             <i className="fas fa-trash-alt"></i>
           </button>
@@ -122,16 +157,15 @@ const BrandsPage = () => {
       
       {loading ? (
         <div className="loading">Đang tải dữ liệu...</div>
-      ) : filteredBrands.length === 0 ? (
+      ) : brands.length === 0 ? (
         <div className="no-data">Không tìm thấy thương hiệu nào</div>
       ) : (
         <>
           <Table 
             columns={columns} 
-            data={filteredBrands} 
+            data={brands} 
           />
           
-          {/* Thêm phân trang */}
           <Pagination 
             currentPage={currentPage}
             totalPages={totalPages}
@@ -140,6 +174,7 @@ const BrandsPage = () => {
         </>
       )}
       
+      {/* Delete confirmation modal */}
       {showDeleteModal && (
         <DeleteConfirmationModal 
           title="Xóa thương hiệu"
@@ -147,6 +182,15 @@ const BrandsPage = () => {
           warningMessage="Lưu ý: Việc xóa thương hiệu sẽ ảnh hưởng đến các sản phẩm thuộc thương hiệu này."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
+
+      {/* Detail modal */}
+      {showDetailModal && selectedBrand && (
+        <DetailModal
+          title={`Chi tiết thương hiệu: ${selectedBrand.name}`}
+          item={selectedBrand}
+          onClose={() => setShowDetailModal(false)}
         />
       )}
     </div>

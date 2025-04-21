@@ -1,78 +1,169 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { FaSearch, FaFilter, FaTimes, FaDog, FaPaw, FaTag, FaMoneyBillWave } from 'react-icons/fa';
 import ProductCard from '../components/products/ProductCard';
 import { addItem } from '../store/cartSlice';
+import { fetchCategories, fetchProductsByCategory, fetchAllBrands } from '../services/api';
 import './FoodPage.css';
+
+// Thêm hàm debounce
+const debounce = (func, delay) => {
+  let timerId;
+  return function(...args) {
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+};
 
 const FoodPage = () => {
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [brands, setBrands] = useState([]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    
+    // Tách state filters thành 2 phần: filters chính và priceInputs tạm thời
     const [filters, setFilters] = useState({
         petType: 'all',
         brand: 'all',
         minPrice: '',
         maxPrice: '',
     });
+    
+    // Thêm state riêng cho input giá
+    const [priceInputs, setPriceInputs] = useState({
+        minPrice: '',
+        maxPrice: ''
+    });
+    
+    // Thêm useRef để theo dõi giá trị filters hiện tại
+    const filtersRef = useRef(filters);
+    
+    // Cập nhật ref mỗi khi filters thay đổi
+    useEffect(() => {
+        filtersRef.current = filters;
+    }, [filters]);
+    
     const dispatch = useDispatch();
 
+    // Tạo hàm loadFoods có thể sử dụng bên ngoài useEffect
+    const loadFoods = async (filtersToUse = filters) => {
+        try {
+            setLoading(true);
+            
+            const categoriesResponse = await fetchCategories({ type: 'food' });
+            const foodCategoryIds = categoriesResponse.data.map(category => category.id);
+            
+            // Sử dụng filters được truyền vào hoặc state mặc định
+            const cleanedFilters = {
+                ...filtersToUse,
+                minPrice: filtersToUse.minPrice ? parseInt(filtersToUse.minPrice, 10) || 0 : undefined,
+                maxPrice: filtersToUse.maxPrice ? parseInt(filtersToUse.maxPrice, 10) || 0 : undefined
+            };
+            
+            const foodPromises = foodCategoryIds.map(categoryId => 
+                fetchProductsByCategory(categoryId, {
+                    pet_type: cleanedFilters.petType !== 'all' ? cleanedFilters.petType : undefined,
+                    min_price: cleanedFilters.minPrice,
+                    max_price: cleanedFilters.maxPrice,
+                    brand_id: cleanedFilters.brand !== 'all' ? cleanedFilters.brand : undefined
+                })
+            );
+            
+            const responses = await Promise.all(foodPromises);
+            
+            let allFoods = [];
+            responses.forEach(response => {
+                if (response.data && Array.isArray(response.data)) {
+                    allFoods = [...allFoods, ...response.data];
+                }
+            });
+            
+            setFoods(allFoods);
+            setError(null);
+        } catch (error) {
+            console.error('Error loading foods:', error);
+            setError('Không thể tải dữ liệu thức ăn. Vui lòng thử lại sau.');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Sửa lại hàm debounced để sử dụng ref thay vì closure value
+    const debouncedLoadFoods = useCallback(
+        debounce(() => {
+            // Sử dụng giá trị hiện tại của filters từ ref
+            loadFoods(filtersRef.current);
+        }, 800),
+        [] // Không có dependency, hàm này không thay đổi
+    );
+
+    // Lấy danh sách thương hiệu từ API
     useEffect(() => {
-        const loadFoods = async () => {
+        const loadBrands = async () => {
             try {
-                // Giả lập API call - thay bằng fetchProductsByCategory thực tế sau này
-                const demoFoods = [
-                    {
-                        id: 101,
-                        name: 'Royal Canin Maxi Adult',
-                        petType: 'dog',
-                        brand: 'Royal Canin',
-                        price: 580000,
-                        description: 'Thức ăn hạt khô dành cho chó trưởng thành giống lớn',
-                        image: '/images/products/royal-canin-food.jpg'
-                    },
-                    {
-                        id: 102,
-                        name: 'Pate Whiskas cho mèo',
-                        petType: 'cat',
-                        brand: 'Whiskas',
-                        price: 195000,
-                        description: 'Pate cho mèo vị cá ngừ và cá hồi',
-                        image: '/images/products/whiskas.jpg'
-                    },
-                    {
-                        id: 103,
-                        name: 'Pedigree cho chó con',
-                        petType: 'dog',
-                        brand: 'Pedigree',
-                        price: 450000,
-                        description: 'Thức ăn hạt mềm cho chó con dưới 1 năm tuổi',
-                        image: '/assets/images/products/pedigree.jpg'
-                    },
-                    {
-                        id: 104,
-                        name: 'Me-O Tuna Adult',
-                        petType: 'cat',
-                        brand: 'Me-O',
-                        price: 320000,
-                        description: 'Thức ăn hạt cho mèo trưởng thành vị cá ngừ',
-                        image: '/assets/images/products/meo-food.jpg'
-                    },
-                ];
-                
-                setFoods(demoFoods);
-                setLoading(false);
+                const response = await fetchAllBrands({ is_active: true });
+                if (response && response.data) {
+                    setBrands(response.data);
+                }
             } catch (error) {
-                console.error('Error loading foods:', error);
-                setLoading(false);
+                console.error('Error loading brands:', error);
             }
         };
-
-        loadFoods();
+        
+        loadBrands();
+        // Khởi tạo priceInputs từ filters
+        setPriceInputs({
+            minPrice: filters.minPrice,
+            maxPrice: filters.maxPrice
+        });
     }, []);
 
+    // Xử lý trực tiếp cho các filter không phải giá
+    useEffect(() => {
+        loadFoods();
+    }, [filters.petType, filters.brand]);
+    
+    // Xử lý riêng cho filter giá
+    useEffect(() => {
+        if (filters.minPrice !== '' || filters.maxPrice !== '') {
+            debouncedLoadFoods(); // Sử dụng hàm debounced khi giá thay đổi
+        }
+    }, [filters.minPrice, filters.maxPrice, debouncedLoadFoods]);
+
+    // Xử lý cho input giá
+    const handlePriceInputChange = (name, value) => {
+        // Đảm bảo giá trị là số hợp lệ
+        const sanitizedValue = value === '' ? '' : value.replace(/[^\d]/g, '');
+        
+        // Cập nhật state tạm thời cho input
+        setPriceInputs({
+            ...priceInputs,
+            [name]: sanitizedValue
+        });
+        
+        // Cập nhật filters (sẽ kích hoạt useEffect và debounce)
+        setFilters({
+            ...filters,
+            [name]: sanitizedValue
+        });
+    };
+
     const handleAddToCart = (product) => {
-        dispatch(addItem(product));
+        // Giữ nguyên logic
+        const primaryImage = product.images?.find(img => img.is_primary)?.image_url || 
+                            product.images?.[0]?.image_url || '';
+        
+        dispatch(addItem({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: primaryImage,
+            quantity: 1,
+            type: 'product'
+        }));
     };
 
     const clearFilters = () => {
@@ -82,16 +173,11 @@ const FoodPage = () => {
             minPrice: '',
             maxPrice: ''
         });
+        setPriceInputs({
+            minPrice: '',
+            maxPrice: ''
+        });
     };
-
-    if (loading) return <div className="loading">Đang tải...</div>;
-
-    const filteredFoods = foods.filter(food => 
-        (filters.petType === 'all' || food.petType === filters.petType) &&
-        (filters.brand === 'all' || food.brand === filters.brand) &&
-        (!filters.minPrice || food.price >= parseInt(filters.minPrice)) &&
-        (!filters.maxPrice || food.price <= parseInt(filters.maxPrice))
-    );
 
     return (
         <div className="food-page">
@@ -125,7 +211,6 @@ const FoodPage = () => {
                                 <option value="all">Tất cả</option>
                                 <option value="dog">Chó</option>
                                 <option value="cat">Mèo</option>
-                                    
                             </select>
                         </div>
                     </div>
@@ -139,15 +224,16 @@ const FoodPage = () => {
                                 onChange={(e) => setFilters({...filters, brand: e.target.value})}
                             >
                                 <option value="all">Tất cả</option>
-                                <option value="Royal Canin">Royal Canin</option>
-                                <option value="Whiskas">Whiskas</option>
-                                <option value="Pedigree">Pedigree</option>
-                                <option value="Me-O">Me-O</option>
+                                {brands.map(brand => (
+                                    <option key={brand.id} value={brand.id}>
+                                        {brand.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
 
-                    {/* Bộ lọc giá */}
+                    {/* Bộ lọc giá - cập nhật để sử dụng priceInputs */}
                     <div className="filter-group price-filter">
                         <label><FaMoneyBillWave /> Giá (VNĐ):</label>
                         <div className="price-inputs">
@@ -155,8 +241,8 @@ const FoodPage = () => {
                                 <input 
                                     type="number" 
                                     placeholder="Tối thiểu"
-                                    value={filters.minPrice}
-                                    onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
+                                    value={priceInputs.minPrice}
+                                    onChange={(e) => handlePriceInputChange('minPrice', e.target.value)}
                                 />
                             </div>
                             <span className="price-separator">-</span>
@@ -164,8 +250,8 @@ const FoodPage = () => {
                                 <input 
                                     type="number" 
                                     placeholder="Tối đa"
-                                    value={filters.maxPrice}
-                                    onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
+                                    value={priceInputs.maxPrice}
+                                    onChange={(e) => handlePriceInputChange('maxPrice', e.target.value)}
                                 />
                             </div>
                         </div>
@@ -181,7 +267,7 @@ const FoodPage = () => {
                     )}
                     {filters.brand !== 'all' && (
                         <div className="filter-tag">
-                            Thương hiệu: {filters.brand}
+                            Thương hiệu: {brands.find(b => b.id === filters.brand)?.name || filters.brand}
                             <button onClick={() => setFilters({...filters, brand: 'all'})}><FaTimes /></button>
                         </div>
                     )}
@@ -200,25 +286,31 @@ const FoodPage = () => {
                 </div>
             </div>
 
+            {/* Hiển thị thông báo lỗi nếu có */}
+            {error && <div className="error-message">{error}</div>}
+
+            {/* Thêm loading indicator nhỏ gọn */}
+            {loading && (
+                <div className="loading-indicator">
+                    <div className="spinner"></div>
+                    <span>Đang tải dữ liệu...</span>
+                </div>
+            )}
+
             <div className="results-info">
-                <p>Hiển thị {filteredFoods.length} sản phẩm</p>
+                <p>Hiển thị {foods.length} sản phẩm</p>
             </div>
 
             <div className="products-grid">
-                {filteredFoods.length > 0 ? (
-                    filteredFoods.map(food => (
+                {foods.length > 0 ? (
+                    foods.map(food => (
                         <div key={food.id} className="product-card-container">
-                            <ProductCard 
-                                product={{
-                                    ...food,
-                                    price: food.price
-                                }}
-                            />
+                            <ProductCard product={food} />
                         </div>
                     ))
-                ) : (
+                ) : !loading ? ( // Chỉ hiển thị "không tìm thấy" khi không đang loading
                     <p className="no-results">Không tìm thấy sản phẩm phù hợp</p>
-                )}
+                ) : null}
             </div>
         </div>
     );

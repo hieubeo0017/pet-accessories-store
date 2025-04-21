@@ -1,3 +1,6 @@
+import React from 'react';
+import './Pagination.css'; // Thêm dòng này nếu chưa có
+
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = [];
   

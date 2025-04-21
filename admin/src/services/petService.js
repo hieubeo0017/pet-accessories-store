@@ -1,180 +1,117 @@
-// Giả lập dữ liệu thú cưng
-const petsData = [
-  {
-    id: 1,
-    name: 'Lucky',
-    type: 'dog',
-    breed: 'Golden Retriever',
-    age: '2 tuổi',
-    gender: 'male',
-    color: 'Vàng',
-    weight: '25kg',
-    price: 10000000,
-    description: 'Chó Golden Retriever thuần chủng, thông minh và thân thiện với trẻ em.',
-    vaccination: 'Đã tiêm đầy đủ các mũi cơ bản',
-    health: 'Khỏe mạnh, đã được kiểm tra sức khỏe định kỳ',
-    origin: 'Việt Nam',
-    stock: 1,
-    is_adopted: false,
-    is_active: true,
-    images: [
-      { 
-        url: 'https://www.thesprucepets.com/thmb/x4mIjo62wYFqKwAjWk-e5GW8HNA=/1500x0/filters:no_upscale():strip_icc()/GettyImages-1144644179-79fa70758c2d48fa8c4bcf7a4e1c79e9.jpg',
-        is_primary: true 
-      },
-      { 
-        url: 'https://img.freepik.com/free-photo/isolated-happy-smiling-dog-white-background-portrait-3_1562-691.jpg',
-        is_primary: false 
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Mimi',
-    type: 'cat',
-    breed: 'Munchkin',
-    age: '1 tuổi',
-    gender: 'female',
-    color: 'Trắng xám',
-    weight: '3kg',
-    price: 8000000,
-    description: 'Mèo Munchkin chân ngắn đáng yêu, tính cách thân thiện.',
-    vaccination: 'Đã tiêm 2/3 mũi cơ bản',
-    health: 'Khỏe mạnh',
-    origin: 'Thái Lan',
-    stock: 1,
-    is_adopted: false,
-    is_active: true,
-    images: [
-      { 
-        url: 'https://petkingdomvn.com/wp-content/uploads/2020/06/meo-munchkin.jpg',
-        is_primary: true 
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Rex',
-    type: 'dog',
-    breed: 'Husky',
-    age: '6 tháng',
-    gender: 'male',
-    color: 'Đen trắng',
-    weight: '15kg',
-    price: 12000000,
-    description: 'Chó Husky thuần chủng, rất năng động và thân thiện.',
-    vaccination: 'Đã tiêm đầy đủ các mũi cơ bản theo độ tuổi',
-    health: 'Khỏe mạnh',
-    origin: 'Việt Nam',
-    stock: 1,
-    is_adopted: false,
-    is_active: true,
-    images: [
-      { 
-        url: 'https://petuni.vn/resources/article/202012/meo-munchkin-chan-ngan-1608795769.jpg',
-        is_primary: true 
-      }
-    ]
-  }
-];
+import axios from 'axios';
 
-// Cập nhật fetchPets để hỗ trợ phân trang
-export const fetchPets = async ({ page = 1, pageSize = 10, searchTerm = '', filter = null } = {}) => {
+const API_URL = 'http://localhost:5000/api/pets';
+
+// Sửa lại function fetchPets để phù hợp với cách gọi từ PetsPage
+export const fetchPets = async (params = {}) => {
   try {
-    // Lọc dữ liệu dựa trên searchTerm và filter
-    let filteredPets = [...petsData]; // Sử dụng dữ liệu mẫu đã khai báo
+    const { 
+      page = 1, 
+      pageSize = 10, 
+      searchTerm = '',  // Thêm tham số này
+      filter = null,    // Thêm tham số này
+      limit = 12,
+      search = '', 
+      type = '', 
+      breed = '', 
+      gender = '',
+      min_price = '', 
+      max_price = '',
+      is_active, // Chỉ thêm tham số is_active nếu nó được định nghĩa
+      sort_by = 'id',
+      sort_order = 'desc'
+    } = params;
+
+    let url = `${API_URL}?page=${page}&limit=${pageSize || limit}`;
     
-    if (searchTerm) {
-      filteredPets = filteredPets.filter(pet => 
-        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pet.breed.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    // Chỉ thêm is_active vào URL khi nó là true hoặc false, không thêm khi là null
+    if (is_active === true) {
+      url += `&is_active=true`;
+    } else if (is_active === false) {
+      url += `&is_active=false`;
     }
+    // Khi is_active là null, không thêm vào URL để lấy tất cả records
     
-    if (filter && filter !== 'all') {
-      filteredPets = filteredPets.filter(pet => pet.type === filter);
-    }
+    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`; 
+    else if (search) url += `&search=${encodeURIComponent(search)}`;
     
-    // Tính toán phân trang
-    const total = filteredPets.length;
-    const startIndex = (page - 1) * pageSize;
-    const paginatedPets = filteredPets.slice(startIndex, startIndex + pageSize);
+    if (filter && filter !== 'all') url += `&type=${filter}`;
+    else if (type && type !== 'all') url += `&type=${type}`;
     
+    if (breed && breed !== 'all') url += `&breed=${encodeURIComponent(breed)}`;
+    if (gender && gender !== 'all') url += `&gender=${gender}`;
+    if (min_price) url += `&min_price=${min_price}`;
+    if (max_price) url += `&max_price=${max_price}`;
+    if (sort_by) url += `&sort_by=${sort_by}`;
+    if (sort_order) url += `&sort_order=${sort_order}`;
+    
+    const response = await axios.get(url);
+    
+    // Đảm bảo trả về đúng cấu trúc dữ liệu mà component cần
     return {
-      data: paginatedPets,
-      total: total,
-      page: page,
-      pageSize: pageSize
+      data: response.data.data || [], 
+      total: response.data.pagination?.total || 0,
+      page: response.data.pagination?.page || 1,
+      limit: response.data.pagination?.limit || pageSize,
+      totalPages: response.data.pagination?.totalPages || 1
     };
   } catch (error) {
-    throw new Error('Failed to fetch pets');
+    console.error('Error fetching pets:', error);
+    throw error;
   }
 };
 
-// Lấy thú cưng theo ID
+// Lấy thông tin chi tiết thú cưng theo ID
 export const fetchPetById = async (id) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const pet = petsData.find(pet => pet.id === Number(id));
-      if (pet) {
-        resolve({...pet});
-      } else {
-        reject(new Error('Không tìm thấy thú cưng'));
-      }
-    }, 500);
-  });
+  try {
+    const response = await axios.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching pet details:', error);
+    throw error;
+  }
 };
 
 // Tạo thú cưng mới
 export const createPet = async (petData) => {
-  // Giả lập call API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newPet = {
-        id: petsData.length + 1,
-        ...petData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      petsData.push(newPet);
-      resolve(newPet);
-    }, 1000);
-  });
+  try {
+    const response = await axios.post(API_URL, petData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating pet:', error);
+    throw error;
+  }
 };
 
 // Cập nhật thú cưng
 export const updatePet = async (id, petData) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = petsData.findIndex(pet => pet.id === Number(id));
-      if (index !== -1) {
-        petsData[index] = { 
-          ...petsData[index], 
-          ...petData,
-          updated_at: new Date().toISOString()
-        };
-        resolve(petsData[index]);
-      } else {
-        reject(new Error('Không tìm thấy thú cưng'));
-      }
-    }, 1000);
-  });
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, petData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating pet:', error);
+    throw error;
+  }
 };
 
 // Xóa thú cưng
 export const deletePet = async (id) => {
-  // Giả lập call API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = petsData.findIndex(pet => pet.id === Number(id));
-      if (index !== -1) {
-        petsData.splice(index, 1);
-        resolve({ success: true });
-      } else {
-        reject(new Error('Không tìm thấy thú cưng'));
-      }
-    }, 500);
-  });
+  try {
+    const response = await axios.delete(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting pet:', error);
+    throw error;
+  }
+};
+
+// Kiểm tra thú cưng có đang được sử dụng không
+export const checkPetInUse = async (id) => {
+  try {
+    const response = await axios.get(`${API_URL}/${id}/in-use`);
+    return response.data.inUse;
+  } catch (error) {
+    console.error('Error checking if pet is in use:', error);
+    throw error;
+  }
 };

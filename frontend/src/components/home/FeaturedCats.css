@@ -137,7 +137,6 @@
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.3s;
-  text-decoration: none;
   display: inline-block;
 }
 
@@ -198,4 +197,24 @@
     height: auto; /* Để chiều cao tự động trên màn hình rất nhỏ */
     min-height: 130px;
   }
+}
+
+/* Thêm vào FeaturedCats.css và FoodAndAccessories.css */
+
+.category-name-button {
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.category-name-button:hover {
+  color: var(--primary-color);
 }

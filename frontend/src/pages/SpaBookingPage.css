@@ -1,0 +1,561 @@
+/* CSS cho trang đặt lịch spa */
+.spa-booking-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+/* Container chính */
+.booking-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Header của trang đặt lịch */
+.booking-header {
+  background-color: #f0f8ff;
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 8px 8px 0 0;
+}
+
+.booking-header h1 {
+  color: #0d47a1;
+  font-size: 28px;
+  margin-bottom: 40px;
+}
+
+/* Container booking steps */
+.booking-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  width: 80%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 15px;
+  min-height: 120px; /* Tăng chiều cao tối thiểu */
+}
+
+/* Đường kẻ ngang nối các steps - đường background */
+.booking-steps::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #e3f2fd; /* Màu nền nhạt hơn */
+  border-radius: 5px;
+  z-index: 0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Bóng đổ nhẹ bên trong */
+}
+
+/* Thêm đường progress */
+.booking-steps::after {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(to right, #1976d2, #64b5f6); /* Gradient màu */
+  border-radius: 5px;
+  z-index: 0;
+  transition: width 0.5s ease;
+  box-shadow: 0 1px 3px rgba(25, 118, 210, 0.3); /* Thêm bóng đổ nhẹ */
+  width: 0%; /* Mặc định là 0% */
+}
+
+/* Thêm progress line trực tiếp bằng element */
+.step-progress-line {
+  position: absolute;
+  top: 22px;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(to right, #1976d2, #64b5f6);
+  border-radius: 5px;
+  z-index: 0;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(25, 118, 210, 0.3);
+}
+
+/* Đặt chiều rộng của progress theo step hiện tại */
+.step:nth-child(1).active ~ .step:nth-child(3) ~ .booking-steps::after {
+  width: 0%; /* Step 1: chưa có progress */
+}
+
+.step:nth-child(2).active ~ .booking-steps::after {
+  width: 50%; /* Step 2: hoàn thành 50% */
+}
+
+.step:nth-child(3).active ~ .booking-steps::after {
+  width: 100%; /* Step 3: hoàn thành 100% */
+}
+
+/* Mỗi bước trong quy trình */
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  width: 33.33%; /* Chia đều không gian */
+  padding: 0 8px; /* Padding ngang */
+  margin-top: 0; /* Reset margin */
+}
+
+/* Số bước */
+.step-number {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  color: #757575;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 25px; /* Tăng khoảng cách với step-name */
+}
+
+/* Khi bước được active */
+.step.active .step-number {
+  background-color: #1976d2;
+  border-color: #1976d2;
+  color: white;
+}
+
+/* Tên bước */
+.step-name {
+  position: absolute;
+  top: 75px; /* Đặt vị trí cách xa step-number */
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  padding: 0 5px;
+  line-height: 1.4;
+  height: auto; /* Chiều cao tự động theo nội dung */
+}
+
+/* Khi bước được active */
+.step.active .step-name {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+/* Form container */
+.booking-form-container {
+  padding: 30px;
+}
+
+.booking-step {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.booking-step h2 {
+  color: var(--secondary-color);
+  font-size: 22px;
+  margin-bottom: 25px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.booking-step h3 {
+  color: var(--secondary-color);
+  font-size: 18px;
+  margin: 30px 0 15px;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
+}
+
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%231e88e5' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 15px) center;
+  padding-right: 40px;
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Phần chọn dịch vụ */
+.services-selection {
+  margin-top: 20px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.service-option {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-option:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.service-option.selected {
+  border-color: var(--primary-color);
+  background-color: var(--light-blue-bg);
+  box-shadow: 0 5px 15px rgba(30, 136, 229, 0.15);
+}
+
+.service-option-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.checkbox {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 3px;
+  transition: all 0.3s;
+}
+
+.service-option.selected .checkbox {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-info h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--secondary-color);
+}
+
+.service-info p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.service-price {
+  display: block;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Phần appointment time */
+.appointment-time {
+  margin: 30px 0;
+}
+
+/* Booking summary */
+.booking-summary {
+  background-color: var(--light-blue-bg);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 30px 0;
+}
+
+.booking-summary h3 {
+  color: var(--secondary-color);
+  margin-bottom: 15px !important;
+  font-size: 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.summary-item strong {
+  color: var(--secondary-color);
+}
+
+.summary-item ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.summary-item li {
+  margin-bottom: 8px;
+}
+
+.summary-total {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 18px;
+}
+
+.summary-total strong {
+  color: var(--secondary-color);
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+  gap: 20px;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--button-hover-color);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-3px);
+}
+
+/* Loading style */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e3f2fd;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading p {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Thêm style cho nút xác thực email và modal */
+
+.verify-email-btn {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.verify-email-btn:hover {
+  background-color: #0b7dda;
+}
+
+.verified-badge {
+  color: #4CAF50;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.auth-modal-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-steps {
+    width: 90%;
+    min-height: 100px;
+  }
+
+  .booking-header {
+    padding: 20px 15px;
+  }
+
+  .booking-header h1 {
+    font-size: 22px;
+    margin-bottom: 30px; /* Tăng khoảng cách với steps */
+  }
+  
+  .step-number {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .step-name {
+    top: 65px;
+    font-size: 13px;
+  }
+  
+  .booking-form-container {
+    padding: 20px 15px;
+  }
+  
+  .booking-step h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 15px;
+  }
+  
+  .btn-primary, .btn-secondary {
+    width: 100%;
+  }
+  
+  .booking-steps {
+    min-height: 90px;
+  }
+  
+  .step-number {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+  
+  .step-name {
+    top: 58px;
+    font-size: 12px;
+    padding: 0 2px;
+  }
+}

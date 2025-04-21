@@ -4,6 +4,7 @@ import { createProduct } from '../../services/productService';
 import { fetchCategories } from '../../services/categoryService';
 import { fetchBrands } from '../../services/brandService';
 import ProductForm from '../../components/products/ProductForm';
+import { toast } from 'react-toastify';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -16,11 +17,17 @@ const AddProductPage = () => {
     const loadFormData = async () => {
       try {
         const [categoriesRes, brandsRes] = await Promise.all([
-          fetchCategories(),
-          fetchBrands()
+          fetchCategories({ pageSize: 1000 }),  // Lấy tất cả danh mục
+          fetchBrands({ pageSize: 1000 })
         ]);
-        setCategories(categoriesRes);
-        setBrands(brandsRes);
+        
+        // Lọc danh mục theo type tại client
+        const filteredCategories = categoriesRes.data.filter(
+          category => category.type === 'food' || category.type === 'accessory'
+        );
+        
+        setCategories(filteredCategories);
+        setBrands(brandsRes.data || []);
       } catch (err) {
         setError('Lỗi khi tải dữ liệu: ' + err.message);
       } finally {
@@ -39,9 +46,10 @@ const AddProductPage = () => {
     brand_id: '',
     pet_type: 'all',
     sku: '',
-    stock: 0,
-    discount: 0,
+    stock: '',       // Thay đổi từ 0 thành chuỗi rỗng
+    discount: '',    // Thay đổi từ 0 thành chuỗi rỗng
     is_active: true,
+    is_featured: false, // Thêm giá trị mặc định này
     specifications: [],
     images: []
   };
@@ -49,9 +57,11 @@ const AddProductPage = () => {
   const handleSubmit = async (productData) => {
     try {
       await createProduct(productData);
+      toast.success('Thêm sản phẩm thành công'); // Thêm thông báo thành công
       navigate('/products');
     } catch (err) {
       setError('Lỗi khi tạo sản phẩm: ' + err.message);
+      toast.error('Lỗi khi tạo sản phẩm: ' + err.message); // Thêm thông báo lỗi
     }
   };
   
