@@ -1,0 +1,144 @@
+.email-auth-container {
+  padding: 25px;
+  background-color: white;
+  border-radius: 8px;
+  width: 450px;
+  max-width: 90vw;
+}
+
+.email-auth-container h2 {
+  color: #1976d2;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.email-info {
+  margin-bottom: 20px;
+  text-align: center;
+  color: #555;
+}
+
+.auth-action {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.btn-send-code {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-send-code:hover:not(:disabled) {
+  background-color: #1565c0;
+}
+
+.btn-send-code:disabled {
+  background-color: #b3e5fc;
+  cursor: not-allowed;
+}
+
+.verification-form {
+  margin: 20px 0;
+}
+
+.code-input-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.verification-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.verification-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.countdown {
+  margin-left: 15px;
+  color: #ff9800;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.btn-resend {
+  margin-left: 15px;
+  background: none;
+  border: 1px solid #1976d2;
+  color: #1976d2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.btn-resend:hover {
+  background-color: #f0f7ff;
+}
+
+.btn-verify-code {
+  width: 100%;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 0;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-verify-code:hover:not(:disabled) {
+  background-color: #388e3c;
+}
+
+.btn-verify-code:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #f44336;
+  margin: 15px 0;
+  text-align: center;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+.auth-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-cancel {
+  background: none;
+  border: none;
+  color: #757575;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 5px 10px;
+}
+
+.btn-cancel:hover {
+  color: #424242;
+}

@@ -16,58 +16,10 @@ const SpaHomePage = () => {
       try {
         setLoading(true);
         
-        // Comment API call thật
-        // const response = await fetchFeaturedSpaServices();
-        
-        // Sử dụng dữ liệu mẫu thay vì gọi API
-        setTimeout(() => {
-          const mockFeaturedServices = [
-            {
-              id: '1',
-              name: 'Tắm và vệ sinh',
-              description: 'Dịch vụ tắm, vệ sinh tai, cắt móng và làm sạch cho thú cưng của bạn.',
-              price: '250000',
-              duration: '60',
-              pet_type: 'dog',
-              pet_size: 'all',
-              image_url: '/images/spa/service-bath.jpg'
-            },
-            {
-              id: '2',
-              name: 'Cắt tỉa lông',
-              description: 'Cắt tỉa lông theo yêu cầu, tạo kiểu lông phù hợp với giống chó của bạn.',
-              price: '350000',
-              duration: '90',
-              pet_type: 'dog',
-              pet_size: 'all',
-              image_url: '/images/spa/service-grooming.jpg'
-            },
-            {
-              id: '3', 
-              name: 'Massage và đắp mặt nạ',
-              description: 'Giúp thú cưng thư giãn với liệu pháp massage và đắp mặt nạ dưỡng lông.',
-              price: '300000',
-              duration: '45',
-              pet_type: 'all',
-              pet_size: 'all',
-              image_url: '/images/spa/service-massage.jpg'
-            },
-            {
-              id: '5',
-              name: 'Spa cao cấp toàn diện',
-              description: 'Gói spa cao cấp bao gồm tắm, cắt tỉa, massage và các dịch vụ làm đẹp khác.',
-              price: '500000',
-              duration: '120',
-              pet_type: 'all',
-              pet_size: 'all',
-              image_url: '/images/spa/service-premium.jpg'
-            }
-          ];
-          
-          setFeaturedServices(mockFeaturedServices);
-          setLoading(false);
-        }, 800); // Giả lập thời gian load API
-        
+        // Gọi API thực tế thay vì dùng dữ liệu mẫu
+        const response = await fetchFeaturedSpaServices();
+        setFeaturedServices(response.data || []);
+        setLoading(false);
       } catch (err) {
         console.error('Error loading featured spa services:', err);
         setError('Không thể tải dịch vụ spa nổi bật');
@@ -89,13 +41,10 @@ const SpaHomePage = () => {
             <h1>Dịch vụ Spa & Chăm sóc thú cưng</h1>
             <p>Mang đến trải nghiệm thư giãn và làm đẹp tuyệt vời cho thú cưng của bạn. Dịch vụ chăm sóc toàn diện, đội ngũ nhân viên giàu kinh nghiệm.</p>
             <div className="hero-buttons">
-              {/* Đường dẫn xem dịch vụ */}
               <Link to="/spa/services" className="btn-primary">Xem dịch vụ</Link>
-              {/* Đường dẫn đặt lịch */}
               <Link to="/spa/booking" className="btn-secondary">Đặt lịch ngay</Link>
             </div>
             
-            {/* Tách nút lịch hẹn ra div riêng */}
             <div className="appointment-link-container">
               <Link to="/spa/appointments" className="btn-secondary">
                 <i className="fas fa-calendar-check"></i> Xem lịch hẹn của tôi
@@ -123,7 +72,6 @@ const SpaHomePage = () => {
           <div className="spa-services-grid">
             {featuredServices.map(service => (
               <ServiceCard key={service.id} service={service}>
-                {/* Đường dẫn xem chi tiết dịch vụ */}
                 <Link to={`/spa/service/${service.id}`} className="view-details-btn">Chi tiết</Link>
               </ServiceCard>
             ))}

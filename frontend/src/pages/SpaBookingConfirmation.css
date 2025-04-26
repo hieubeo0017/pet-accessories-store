@@ -1,0 +1,314 @@
+.booking-confirmation-page {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.confirmation-container {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.confirmation-header {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+  animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.confirmation-header h1 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.confirmation-header p {
+  opacity: 0.9;
+  font-size: 16px;
+}
+
+.confirmation-details {
+  padding: 30px;
+}
+
+.confirmation-info, .confirmation-services, .confirmation-instructions {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.confirmation-details h2 {
+  color: var(--secondary-color);
+  font-size: 20px;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Styling cho hàng thông tin */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.status-pending {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.status-confirmed {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+/* Danh sách dịch vụ */
+.services-list {
+  margin-top: 15px;
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.service-item:last-child {
+  border-bottom: none;
+}
+
+.service-name {
+  font-weight: 500;
+}
+
+.service-price {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Tổng cộng */
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 15px;
+  margin-top: 10px;
+  border-top: 2px solid #eee;
+}
+
+.total-label {
+  font-weight: 600;
+  font-size: 18px;
+  color: #333;
+}
+
+.total-value {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+/* Phần hướng dẫn */
+.confirmation-instructions ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-top: 15px;
+}
+
+.confirmation-instructions li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  color: #444;
+}
+
+/* Buttons */
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  padding: 0 30px 30px;
+}
+
+.btn-view-appointments, .btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-view-appointments {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-view-appointments:hover {
+  background-color: #1565c0;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-back-home {
+  background-color: #f5f5f5;
+  color: #555;
+  border: 1px solid #ddd;
+}
+
+.btn-back-home:hover {
+  background-color: #eeeeee;
+  transform: translateY(-3px);
+}
+
+.btn-review-appointment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  background-color: #ff9800;
+  color: white;
+  margin-right: 10px;
+}
+
+.btn-review-appointment:hover {
+  background-color: #f57c00;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(245, 124, 0, 0.2);
+}
+
+/* Loading state */
+.booking-confirmation-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.booking-confirmation-loading .spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e3f2fd;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error state */
+.booking-confirmation-error {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.booking-confirmation-error i {
+  font-size: 60px;
+  color: #f44336;
+  margin-bottom: 20px;
+}
+
+.booking-confirmation-error h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.booking-confirmation-error p {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.booking-confirmation-error .btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 25px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.booking-confirmation-error .btn-primary:hover {
+  background-color: #1565c0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .confirmation-actions {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 20px 20px;
+  }
+
+  .btn-view-appointments, .btn-back-home {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-review-appointment {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .confirmation-details {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .confirmation-header h1 {
+    font-size: 24px;
+  }
+
+  .success-icon {
+    font-size: 50px;
+  }
+
+  .confirmation-details h2 {
+    font-size: 18px;
+  }
+
+  .total-label, .total-value {
+    font-size: 16px;
+  }
+}

@@ -15,12 +15,76 @@ const FileUpload = ({ onUpload, maxFiles = 1, accept = '*', multiple = false, no
     setIsDragging(false);
   };
   
-  const handleDrop = (e) => {
+  // Cải thiện xử lý kéo thả
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
     
-    if (e.dataTransfer.files) {
-      processFiles(e.dataTransfer.files);
+    try {
+      // Ưu tiên xử lý files nếu có
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processFiles(e.dataTransfer.files);
+        return;
+      }
+      
+      // Xử lý trường hợp kéo thả từ trang web khác (có thể là URL hình ảnh)
+      const items = Array.from(e.dataTransfer.items || []);
+      if (items.length > 0) {
+        const imageItems = items.filter(item => item.kind === 'string' && item.type.match(/^text\/uri-list|^text\/plain/));
+        
+        if (imageItems.length > 0) {
+          setUploading(true);
+          const promises = imageItems.map(item => 
+            new Promise((resolve) => {
+              item.getAsString(url => {
+                resolve(url);
+              });
+            })
+          );
+          
+          const urls = await Promise.all(promises);
+          // Lọc URL hợp lệ
+          const validUrls = urls
+            .map(url => url.trim())
+            .filter(url => url.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+          
+          if (validUrls.length > 0) {
+            // Tải hình ảnh từ URL và chuyển đổi thành File
+            const fetchPromises = validUrls.slice(0, maxFiles).map(async (url) => {
+              try {
+                // Sử dụng proxy hoặc CORS-friendly endpoint nếu cần
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const fileName = url.split('/').pop() || 'image.jpg';
+                
+                // Tạo File object từ Blob
+                const file = new File([blob], fileName, {
+                  type: blob.type || 'image/jpeg'
+                });
+                
+                return file;
+              } catch (err) {
+                console.error(`Error fetching image from ${url}:`, err);
+                return null;
+              }
+            });
+            
+            const fetchedFiles = (await Promise.all(fetchPromises)).filter(file => file !== null);
+            if (fetchedFiles.length > 0) {
+              processFiles(fetchedFiles);
+              return;
+            }
+          }
+        }
+      }
+      
+      // Thông báo nếu không tìm thấy dữ liệu hình ảnh hợp lệ
+      console.warn('Không tìm thấy dữ liệu hình ảnh hợp lệ để xử lý');
+      
+    } catch (error) {
+      console.error('Error handling drop:', error);
+    } finally {
+      setUploading(false);
     }
   };
   
@@ -32,55 +96,61 @@ const FileUpload = ({ onUpload, maxFiles = 1, accept = '*', multiple = false, no
   
   const processFiles = async (fileList) => {
     try {
-      // Giới hạn số lượng file được xử lý
+      // Giới hạn số lượng file
       const files = Array.from(fileList).slice(0, maxFiles);
       
       if (fileList.length > maxFiles) {
         alert(`Chỉ được chọn tối đa ${maxFiles} file cùng lúc.`);
       }
       
-      // Kiểm tra kích thước của từng file (giới hạn 5MB)
+      // Kiểm tra kích thước
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
       const oversizedFiles = files.filter(file => file.size > maxSizeInBytes);
       
       if (oversizedFiles.length > 0) {
         alert(`Các file sau vượt quá kích thước cho phép (5MB):\n${oversizedFiles.map(f => f.name).join('\n')}\n\nVui lòng chọn lại file có kích thước nhỏ hơn.`);
-        return; // Dừng upload nếu có file quá lớn
+        return;
       }
       
       setUploading(true);
       
-      // Tạo đối tượng API với timeout dài hơn
+      // Tạo API với timeout dài hơn
       const api = axios.create({
         baseURL: 'http://localhost:5000',
-        timeout: 30000 // 30 giây để xử lý upload lớn
+        timeout: 40000 // 40 giây 
       });
       
-      // Xử lý upload nhiều file
+      // Xử lý upload files
       if (multiple) {
         const formData = new FormData();
         files.forEach(file => {
-          formData.append('images', file);
+          // Kiểm tra xem nó có phải là File object không
+          if (file instanceof File) {
+            formData.append('images', file);
+          } else if (file instanceof Blob) {
+            // Nếu là Blob, chuyển đổi thành File
+            formData.append('images', new File([file], 'image.jpg', { type: file.type || 'image/jpeg' }));
+          }
         });
         
-        // Upload lên server trước
+        // Upload lên server
         const response = await api.post('/api/upload/multiple', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         
-        // Sau đó chuyển đổi kết quả
+        // Chuyển đổi kết quả
         const uploadedFiles = response.data.map(fileInfo => ({
           url: `http://localhost:5000${fileInfo.url}`,
+          image_url: `http://localhost:5000${fileInfo.url}`, // Thêm trường này để đảm bảo tính nhất quán
           name: fileInfo.originalName,
           size: fileInfo.size,
           type: fileInfo.mimetype,
           is_primary: false
         }));
         
-        // Gọi callback với kết quả từ server
         onUpload(uploadedFiles);
       } else {
-        // Xử lý upload đơn lẻ
+        // Xử lý tương tự cho single file upload
         const formData = new FormData();
         formData.append('image', files[0]);
         

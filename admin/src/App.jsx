@@ -34,6 +34,10 @@ import EditSpaServicesPage from './pages/spa-services/EditSpaServicesPage'; // C
 import SpaAppointmentsPage from './pages/spa-appointments/SpaAppointmentsPage';
 import SpaAppointmentDetailPage from './pages/spa-appointments/SpaAppointmentDetailPage';
 import AddSpaAppointmentPage from "./pages/spa-appointments/AddSpaAppointmentPage"; // Thêm import cho trang mới
+import EditSpaAppointmentPage from './pages/spa-appointments/EditSpaAppointmentPage'; // Thêm import cho trang mới
+
+// Spa time slots management
+import SpaTimeSlotsPage from './pages/spa-time-slots/SpaTimeSlotsPage';
 
 // Error page
 import NotFound from './pages/NotFound';
@@ -84,6 +88,12 @@ function App() {
           <Route index element={<SpaAppointmentsPage />} />
           <Route path="add" element={<AddSpaAppointmentPage />} /> {/* Thêm route trong phần <Routes> */}
           <Route path=":id" element={<SpaAppointmentDetailPage />} />
+          <Route path="edit/:id" element={<EditSpaAppointmentPage />} /> {/* Thêm route mới */}
+        </Route>
+
+        {/* Spa time slots management */}
+        <Route path="spa-time-slots">
+          <Route index element={<SpaTimeSlotsPage />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />

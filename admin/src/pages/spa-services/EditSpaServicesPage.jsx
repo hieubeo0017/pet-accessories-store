@@ -18,14 +18,18 @@ const EditSpaServicePage = () => {
         setLoading(true);
         const serviceData = await fetchSpaServiceById(id);
         
-        // Đảm bảo is_featured là boolean
-        setService({
-          ...serviceData,
-          is_featured: serviceData.is_featured === true || serviceData.is_featured === 1
-        });
+        console.log("Service data received:", serviceData);
+        
+        // Đảm bảo luôn sử dụng mảng images
+        if (!serviceData.images || serviceData.images.length === 0) {
+          // Nếu không có mảng images, tạo mảng trống
+          serviceData.images = [];
+        }
+        
+        setService(serviceData);
       } catch (error) {
         console.error('Error loading service data:', error);
-        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+        toast.error('Không thể tải thông tin dịch vụ');
       } finally {
         setLoading(false);
       }
@@ -38,7 +42,22 @@ const EditSpaServicePage = () => {
     setUpdating(true);
     
     try {
-      await updateSpaService(id, serviceData);
+      console.log("Form data being submitted:", serviceData);
+      
+      // Chuẩn bị dữ liệu gửi đi
+      const formattedData = {
+        ...serviceData,
+        price: parseFloat(serviceData.price),
+        duration: parseInt(serviceData.duration),
+        is_active: Boolean(serviceData.is_active),
+        is_featured: Boolean(serviceData.is_featured),
+        images: serviceData.images ? serviceData.images.map(img => ({
+          image_url: img.image_url,
+          is_primary: Boolean(img.is_primary)
+        })) : []
+      };
+      
+      await updateSpaService(id, formattedData);
       toast.success('Cập nhật dịch vụ spa thành công');
       navigate('/spa-services');
     } catch (error) {

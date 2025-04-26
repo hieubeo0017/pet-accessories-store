@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchSpaServices, createSpaAppointment } from '../services/api';
-import EmailAuth from '../components/auth/EmailAuth'; //
+import { fetchSpaServices, createSpaAppointment, fetchBreeds, fetchSpaTimeSlotAvailability } from '../services/api';
+import EmailAuth from '../components/auth/EmailAuth';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { vi } from 'date-fns/locale/vi';
+import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
+import "react-datepicker/dist/react-datepicker.css";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Đăng ký locale tiếng Việt
+registerLocale('vi', vi);
 
 import './SpaBookingPage.css';
 
@@ -39,68 +49,24 @@ const SpaBookingPage = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailUser, setEmailUser] = useState(null);
 
-  const mockServices = [
-    {
-      id: '1',
-      name: 'Tắm và vệ sinh',
-      description: 'Dịch vụ tắm, vệ sinh tai, cắt móng và làm sạch cho thú cưng của bạn.',
-      price: '250000',
-      duration: '60',
-      pet_type: 'dog',
-      pet_size: 'all',
-      image_url: '/images/spa/service-bath.jpg'
-    },
-    {
-      id: '2',
-      name: 'Cắt tỉa lông',
-      description: 'Cắt tỉa lông theo yêu cầu, tạo kiểu lông phù hợp với giống chó của bạn.',
-      price: '350000',
-      duration: '90',
-      pet_type: 'dog',
-      pet_size: 'all',
-      image_url: '/images/spa/service-grooming.jpg'
-    },
-    {
-      id: '3', 
-      name: 'Massage và đắp mặt nạ',
-      description: 'Giúp thú cưng thư giãn với liệu pháp massage và đắp mặt nạ dưỡng lông.',
-      price: '300000',
-      duration: '45',
-      pet_type: 'dog',
-      pet_size: 'all',
-      image_url: '/images/spa/service-massage.jpg'
-    },
-    {
-      id: '4',
-      name: 'Tẩy lông rụng',
-      description: 'Loại bỏ lông rụng, giảm thiểu tình trạng rụng lông trong nhà.',
-      price: '200000',
-      duration: '40',
-      pet_type: 'cat',
-      pet_size: 'all',
-      image_url: '/images/spa/service-deshedding.jpg'
-    },
-    {
-      id: '5',
-      name: 'Spa cao cấp toàn diện',
-      description: 'Gói spa cao cấp bao gồm tắm, cắt tỉa, massage và các dịch vụ làm đẹp khác.',
-      price: '500000',
-      duration: '120',
-      pet_type: 'all',
-      pet_size: 'all',
-      image_url: '/images/spa/service-premium.jpg'
-    }
-  ];
+  const [startDate, setStartDate] = useState(null);
+
+  // State cho danh sách giống
+  const [breeds, setBreeds] = useState([]);
+  const [isLoadingBreeds, setIsLoadingBreeds] = useState(false);
+
+  // State cho khung giờ
+  const [availableTimeSlots, setAvailableTimeSlots] = useState({});
+  const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
 
   useEffect(() => {
-    // Giả lập việc gọi API
     const loadServices = async () => {
       try {
         setLoading(true);
-        setTimeout(() => {
-          setServices(mockServices);
-          setLoading(false);
-        }, 800); // Giả lập thời gian load API
+        // Gọi API thực thay vì dùng mock data
+        const response = await fetchSpaServices();
+        setServices(response.data || []);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching spa services:', error);
         setError('Không thể tải dịch vụ spa');
@@ -111,12 +77,97 @@ const SpaBookingPage = () => {
     loadServices();
   }, []);
 
+  useEffect(() => {
+    const loadBreeds = async () => {
+      if (!formData.petType) return;
+      
+      try {
+        setIsLoadingBreeds(true);
+        const response = await fetchBreeds(formData.petType);
+        
+        // Kiểm tra và xử lý dữ liệu
+        if (response && response.data && Array.isArray(response.data)) {
+          const breedOptions = response.data.map(breed => ({ value: breed, label: breed }));
+          setBreeds(breedOptions);
+        } else if (response && response.data && Array.isArray(response.data.data)) {
+          // Trường hợp API trả về { data: [...] }
+          const breedOptions = response.data.data.map(breed => ({ value: breed, label: breed }));
+          setBreeds(breedOptions);
+        } else {
+          console.error('Unexpected API response format:', response);
+          setBreeds([]);
+        }
+      } catch (error) {
+        console.error('Error loading breeds:', error);
+        setBreeds([]);
+      } finally {
+        setIsLoadingBreeds(false);
+      }
+    };
+    
+    loadBreeds();
+  }, [formData.petType]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
     });
+  };
+
+  const handleDateChange = (date) => {
+    if (date) {
+      // Tạo ngày mới không phụ thuộc vào timezone
+      const localDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        12, 0, 0
+      );
+      
+      // Lưu ngày vào state dưới định dạng ISO string YYYY-MM-DD
+      const formattedDate = localDate.toISOString().split('T')[0];
+      setStartDate(localDate);
+      setFormData(prev => ({
+        ...prev,
+        appointmentDate: formattedDate
+      }));
+      
+      // Gọi API kiểm tra khung giờ khả dụng
+      checkAvailability(formattedDate);
+    } else {
+      setStartDate(null);
+      setFormData(prev => ({
+        ...prev,
+        appointmentDate: '',
+        appointmentTime: '' // Reset giờ khi xóa ngày
+      }));
+      setAvailableTimeSlots({}); // Xóa danh sách khung giờ
+    }
+  };
+
+  const checkAvailability = async (date) => {
+    setIsLoadingTimeSlots(true);
+    try {
+      const response = await fetchSpaTimeSlotAvailability(date);
+      console.log('API response in component:', response);
+      
+      if (response && response.success && response.data) {
+        // Đảm bảo lưu trực tiếp object data từ API
+        setAvailableTimeSlots(response.data);
+        console.log('Time slots set to state:', response.data);
+      } else {
+        console.warn('No time slots data found in response');
+        setAvailableTimeSlots({});
+      }
+    } catch (error) {
+      console.error('Error checking time slot availability:', error);
+      toast.error('Không thể kiểm tra khung giờ trống');
+      setAvailableTimeSlots({});
+    } finally {
+      setIsLoadingTimeSlots(false);
+    }
   };
 
   const handleServiceToggle = (serviceId) => {
@@ -137,6 +188,13 @@ const SpaBookingPage = () => {
     });
   };
 
+  const handleTimeSelect = (time) => {
+    setFormData(prev => ({
+      ...prev,
+      appointmentTime: time
+    }));
+  };
+
   const nextStep = () => {
     setCurrentStep(prev => prev + 1);
     window.scrollTo(0, 0);
@@ -149,16 +207,21 @@ const SpaBookingPage = () => {
 
   const handleProceedToBooking = (e) => {
     e.preventDefault();
+    
     if (!emailVerified) {
-      // Kiểm tra email trước khi hiển thị form xác thực
+      // Hiển thị form xác thực nếu chưa xác thực email
       if (!formData.email || !validateEmail(formData.email)) {
-        alert('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
+        // Sử dụng alert thay thế hoặc kiểm tra toast
+        if (typeof toast !== 'undefined') {
+          toast.error('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
+        } else {
+          alert('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
+        }
         return;
       }
       setShowEmailAuth(true);
-    } else if (!phoneVerified) {
-      setShowPhoneAuth(true);
     } else {
+      // Nếu email đã xác thực, tiến hành đặt lịch
       handleSubmitBooking();
     }
   };
@@ -176,13 +239,89 @@ const SpaBookingPage = () => {
   };
 
   const handleEmailVerified = (user) => {
-    setEmailUser(user);
+    setEmailUser(user || { email: formData.email });  // Lấy email từ form
     setEmailVerified(true);
     setShowEmailAuth(false);
+    
+    // Hiển thị thông báo thành công (nếu có toast)
+    if (typeof toast !== 'undefined') {
+      toast.success("Email đã được xác thực thành công!");
+    }
   };
 
   const handleSubmitBooking = async () => {
-    alert('Chức năng đặt lịch đang được phát triển');
+    try {
+      toast.info('Đang xử lý đặt lịch...');
+      
+      // Đảm bảo định dạng ngày là YYYY-MM-DD
+      let formattedDate = formData.appointmentDate;
+      if (formData.appointmentDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.appointmentDate)) {
+          const dateObj = new Date(formData.appointmentDate);
+          formattedDate = dateObj.toISOString().split('T')[0];
+        }
+      }
+
+      // Đảm bảo định dạng thời gian là HH:MM:SS
+      let formattedTime = formData.appointmentTime;
+      if (formData.appointmentTime) {
+        // Đảm bảo định dạng giờ đúng với chuẩn ISO
+        formattedTime = formData.appointmentTime + ':00';
+        
+        // Thêm dòng kiểm tra giờ đã đúng định dạng chưa
+        console.log('Formatted time for API:', formattedTime);
+      }
+      
+      // Chuẩn bị dữ liệu - Bọc vào đối tượng appointmentData như backend mong đợi
+      const bookingData = {
+        appointmentData: {
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          email: formData.email,
+          pet_name: formData.petName,
+          pet_type: formData.petType,
+          pet_breed: formData.petBreed || '',
+          pet_size: formData.petSize,
+          pet_notes: formData.petNotes || '',
+          appointment_date: formattedDate,
+          appointment_time: formattedTime,
+          payment_status: 'pending',
+          status: 'pending',
+          total_amount: formData.selectedServices.reduce((total, serviceId) => {
+            const service = services.find(s => s.id === serviceId);
+            return total + (service ? parseInt(service.price) : 0);
+          }, 0)
+        },
+        services: formData.selectedServices.map(serviceId => ({
+          service_id: serviceId,
+          price: services.find(s => s.id === serviceId)?.price || 0
+        }))
+      };
+      
+      console.log('Sending booking data:', bookingData);
+      
+      // Gọi API đặt lịch
+      const response = await createSpaAppointment(bookingData);
+      
+      toast.success('Đặt lịch thành công! Chúng tôi đã gửi email xác nhận cho bạn.');
+      
+      // Sửa dòng này - Truy xuất ID đúng cấu trúc
+      const appointmentId = response.data.data.id;
+      
+      // Log để kiểm tra
+      console.log('Appointment created with ID:', appointmentId);
+      
+      navigate(`/spa/booking/confirmation/${appointmentId}`);
+    } catch (error) {
+      console.error('Lỗi khi đặt lịch:', error);
+      
+      if (error.response) {
+        console.error('Thông tin phản hồi từ server:', error.response.data);
+        toast.error(error.response.data.message || 'Có lỗi xảy ra khi đặt lịch');
+      } else {
+        toast.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
+      }
+    }
   };
 
   return (
@@ -239,13 +378,43 @@ const SpaBookingPage = () => {
                 </div>
                 
                 <div className="form-group">
-                  <label>Giống</label>
-                  <input 
-                    type="text" 
-                    name="petBreed" 
-                    value={formData.petBreed} 
-                    onChange={handleInputChange}
-                  />
+                  <label htmlFor="pet_breed">Giống</label>
+                  {isLoadingBreeds ? (
+                    <div className="select-loading">
+                      <div className="spinner-small"></div>
+                      <select disabled>
+                        <option>Đang tải giống...</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <CreatableSelect
+                      id="pet_breed"
+                      name="petBreed"
+                      value={formData.petBreed ? { value: formData.petBreed, label: formData.petBreed } : null}
+                      onChange={(selectedOption) => {
+                        handleInputChange({
+                          target: {
+                            name: 'petBreed',
+                            value: selectedOption ? selectedOption.value : ''
+                          }
+                        });
+                      }}
+                      options={breeds}
+                      isLoading={isLoadingBreeds}
+                      placeholder="Chọn hoặc nhập giống thú cưng..."
+                      noOptionsMessage={() => "Không tìm thấy giống phù hợp. Bạn có thể nhập giống mới."}
+                      formatCreateLabel={(inputValue) => `Sử dụng "${inputValue}"`}
+                      isClearable
+                      isSearchable
+                      isDisabled={!formData.petType}
+                      className="breed-select"
+                    />
+                  )}
+                  {formData.petType && !formData.petBreed && (
+                    <small className="form-hint">
+                      Chọn từ danh sách hoặc nhập giống mới nếu không tìm thấy
+                    </small>
+                  )}
                 </div>
               </div>
               
@@ -322,32 +491,53 @@ const SpaBookingPage = () => {
                     <div className="form-row">
                       <div className="form-group">
                         <label>Ngày</label>
-                        <input 
-                          type="date" 
-                          name="appointmentDate" 
-                          value={formData.appointmentDate} 
-                          onChange={handleInputChange}
-                          min={new Date().toISOString().split('T')[0]}
-                          required
-                        />
+                        <div className="custom-date-container">
+                          <DatePicker
+                            selected={startDate}
+                            onChange={handleDateChange}
+                            locale="vi"
+                            dateFormat="dd/MM/yyyy"
+                            placeholderText="Chọn ngày"
+                            minDate={new Date()}
+                            className="date-input"
+                            required
+                            isClearable
+                            showYearDropdown
+                            showMonthDropdown
+                            dropdownMode="select"
+                            todayButton="Hôm nay"
+                          />
+                        </div>
                       </div>
                       
                       <div className="form-group">
                         <label>Giờ</label>
-                        <select 
-                          name="appointmentTime" 
-                          value={formData.appointmentTime} 
-                          onChange={handleInputChange}
-                          required
-                        >
-                          <option value="">Chọn giờ</option>
-                          <option value="09:00">09:00</option>
-                          <option value="10:00">10:00</option>
-                          <option value="11:00">11:00</option>
-                          <option value="14:00">14:00</option>
-                          <option value="15:00">15:00</option>
-                          <option value="16:00">16:00</option>
-                        </select>
+                        {isLoadingTimeSlots ? (
+                          <div className="loading-time-slots">
+                            <div className="spinner-small"></div>
+                            <p>Đang tải khung giờ trống...</p>
+                          </div>
+                        ) : (
+                          <div className="time-slots">
+                            {Object.keys(availableTimeSlots).length > 0 ? (
+                              Object.entries(availableTimeSlots).map(([time, slotInfo]) => {
+                                console.log('Rendering time slot:', time, slotInfo);
+                                return (
+                                  <div 
+                                    key={time}
+                                    className={`time-slot ${formData.appointmentTime === time ? 'selected' : ''} ${slotInfo.available <= 0 ? 'disabled' : ''}`}
+                                    onClick={() => slotInfo.available > 0 && handleTimeSelect(time)}
+                                  >
+                                    <span className="time">{time}</span>
+                                    <span className="slot-count">{slotInfo.available} chỗ trống</span>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="no-slots-message">Không có khung giờ trống cho ngày này</div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -429,9 +619,23 @@ const SpaBookingPage = () => {
                 <h3>Thông tin đặt lịch</h3>
                 <div className="summary-item">
                   <strong>Thú cưng:</strong> {formData.petName} ({formData.petType === 'dog' ? 'Chó' : 'Mèo'})
+                  <div className="sub-info">Kích thước: {
+                    formData.petSize === 'small' ? 'Nhỏ (dưới 10kg)' : 
+                    formData.petSize === 'medium' ? 'Vừa (10-25kg)' : 
+                    'Lớn (trên 25kg)'
+                  }</div>
+                  {formData.petNotes && <div className="sub-info">Ghi chú: {formData.petNotes}</div>}
                 </div>
                 <div className="summary-item">
-                  <strong>Thời gian:</strong> {formData.appointmentDate} - {formData.appointmentTime}
+                  <strong>Thời gian:</strong> {
+                    formData.appointmentDate 
+                      ? new Date(formData.appointmentDate).toLocaleDateString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })
+                      : ''
+                  } - {formData.appointmentTime}
                 </div>
                 <div className="summary-item">
                   <strong>Dịch vụ đã chọn:</strong>
@@ -450,7 +654,7 @@ const SpaBookingPage = () => {
                   <strong>Tổng tiền:</strong> 
                   {formData.selectedServices.reduce((total, serviceId) => {
                     const service = services.find(s => s.id === serviceId);
-                    return total + (service ? service.price : 0);
+                    return total + (service ? parseInt(service.price) : 0);
                   }, 0).toLocaleString('vi-VN')}đ
                 </div>
               </div>
@@ -493,6 +697,8 @@ const SpaBookingPage = () => {
           </div>
         </div>
       )}
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

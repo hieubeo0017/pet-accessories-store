@@ -3,69 +3,97 @@ import { Link } from 'react-router-dom';
 import SearchBar from '../../components/common/SearchBar';
 import Table from '../../components/common/Table';
 import Pagination from '../../components/common/Pagination';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import { toast } from 'react-toastify';
 import { formatDate, formatTime, formatCurrency } from '../../utils/formatters';
-import { mockSpaAppointments } from '../../services/spaAppointmentService';
+import { fetchAppointments, deleteAppointment, restoreAppointment } from '../../services/spaAppointmentService';
+import DatePicker, { registerLocale } from "react-datepicker";
+import { vi } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
 import './SpaAppointments.css';
+
+// Đăng ký locale tiếng Việt
+registerLocale("vi", vi);
 
 const SpaAppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState({
-    from: '',
-    to: ''
+    from: null,
+    to: null
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
   
   const pageSize = 10;
   
-  useEffect(() => {
-    // Simulate API loading
+  const loadAppointments = async () => {
     setLoading(true);
-    setTimeout(() => {
-      // Filter and search mock data
-      let filteredAppointments = [...mockSpaAppointments];
-      
+    try {
+      const params = {
+        page: currentPage,
+        limit: pageSize,
+        sort_by: 'id',
+        sort_order: 'desc'
+      };
+
       if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filteredAppointments = filteredAppointments.filter(app => 
-          app.full_name.toLowerCase().includes(term) || 
-          app.phone_number.includes(term) ||
-          app.pet_name.toLowerCase().includes(term)
-        );
+        params.search = searchTerm;
       }
-      
+
       if (statusFilter !== 'all') {
-        filteredAppointments = filteredAppointments.filter(app => 
-          app.status === statusFilter
-        );
+        params.status = statusFilter;
       }
-      
+
       if (dateFilter.from) {
-        filteredAppointments = filteredAppointments.filter(app => 
-          app.appointment_date >= dateFilter.from
-        );
+        params.from_date = dateFilter.from.toISOString().split('T')[0];
       }
-      
       if (dateFilter.to) {
-        filteredAppointments = filteredAppointments.filter(app => 
-          app.appointment_date <= dateFilter.to
-        );
+        params.to_date = dateFilter.to.toISOString().split('T')[0];
       }
+
+      const result = await fetchAppointments(params);
       
-      setAppointments(filteredAppointments);
-      setTotalPages(Math.ceil(filteredAppointments.length / pageSize));
+      setAppointments(result.data || []);
+      setTotalPages(result.pagination?.totalPages || 1);
+    } catch (err) {
+      console.error('Error loading spa appointments:', err);
+      setError('Lỗi khi tải dữ liệu lịch hẹn');
+      toast.error('Không thể tải danh sách lịch hẹn');
+    } finally {
       setLoading(false);
-    }, 500); // Simulating network delay
+    }
+  };
+  
+  useEffect(() => {
+    loadAppointments();
   }, [currentPage, searchTerm, statusFilter, dateFilter]);
   
-  const handleDateFilterChange = (field, value) => {
+  const handleDateFilterChange = (field, date) => {
+    console.log(`Setting ${field} date before adjustment:`, date);
+    
+    let adjustedDate = date;
+    
+    if (date) {
+      // Tạo ngày mới và đặt giờ để tránh vấn đề múi giờ
+      adjustedDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      
+      // Nếu là ngày kết thúc, cộng thêm 1 ngày rồi trừ 1 millisecond để lấy cuối ngày
+      if (field === 'to') {
+        // Không cần điều chỉnh ngày kết thúc nữa
+      }
+    }
+    
+    console.log(`Setting ${field} date after adjustment:`, adjustedDate);
+    
     setDateFilter(prev => ({
       ...prev,
-      [field]: value
+      [field]: adjustedDate
     }));
     setCurrentPage(1);
   };
@@ -73,7 +101,7 @@ const SpaAppointmentsPage = () => {
   const clearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
-    setDateFilter({ from: '', to: '' });
+    setDateFilter({ from: null, to: null });
     setCurrentPage(1);
   };
   
@@ -96,6 +124,46 @@ const SpaAppointmentsPage = () => {
       default: return status;
     }
   };
+
+  const handleDeleteClick = (appointment) => {
+    setAppointmentToDelete(appointment);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!appointmentToDelete) return;
+    
+    try {
+      setLoading(true);
+      await deleteAppointment(appointmentToDelete.id);
+      toast.success(`Đã xóa lịch hẹn #${appointmentToDelete.id} thành công`);
+      
+      await loadAppointments();
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast.error(error.response?.data?.message || 'Lỗi khi xóa lịch hẹn');
+    } finally {
+      setShowDeleteModal(false);
+      setAppointmentToDelete(null);
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setAppointmentToDelete(null);
+  };
+
+  const handleRestoreClick = async (appointment) => {
+    try {
+      const result = await restoreAppointment(appointment.id);
+      toast.success(`Đã khôi phục lịch hẹn #${appointment.id} thành công`);
+      await loadAppointments();
+    } catch (error) {
+      console.error(`Error restoring appointment #${appointment.id}:`, error);
+      toast.error(error.response?.data?.message || 'Lỗi khi khôi phục lịch hẹn');
+    }
+  };
   
   const columns = [
     { 
@@ -104,7 +172,17 @@ const SpaAppointmentsPage = () => {
       width: '120px',
       noWrap: true
     },
-    { header: 'Khách hàng', accessor: 'full_name' },
+    { 
+      header: 'Khách hàng', 
+      accessor: 'full_name',
+      width: '150px', // Thêm chiều rộng cố định
+      noWrap: true,   // Thêm thuộc tính không xuống dòng
+      cell: (row) => (
+        <div className="customer-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {row.full_name}
+        </div>
+      )
+    },
     { header: 'Liên hệ', 
       accessor: 'phone_number',
       cell: (row) => (
@@ -162,10 +240,32 @@ const SpaAppointmentsPage = () => {
       header: 'Thao tác',
       accessor: 'actions',
       cell: (row) => (
-        <div className="action-buttons">
-          <Link to={`/spa-appointments/${row.id}`} className="btn-view" title="Xem chi tiết">
+        <div className="table-actions">
+          <Link to={`/spa-appointments/${row.id}`} className="btn-view" title="Chi tiết">
             <i className="fas fa-eye"></i>
           </Link>
+          <Link to={`/spa-appointments/edit/${row.id}`} className="btn-edit" title="Chỉnh sửa">
+            <i className="fas fa-edit"></i>
+          </Link>
+          <button 
+            className="btn-delete" 
+            title="Xóa lịch hẹn" 
+            onClick={() => handleDeleteClick(row)}
+          >
+            <i className="fas fa-trash-alt"></i>
+          </button>
+          {row.status === 'cancelled' && (
+            <button
+              className="btn-restore"
+              title="Khôi phục lịch hẹn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRestoreClick(row);
+              }}
+            >
+              <i className="fas fa-undo"></i>
+            </button>
+          )}
         </div>
       )
     }
@@ -207,18 +307,26 @@ const SpaAppointmentsPage = () => {
           <div className="date-range">
             <div className="date-input-group">
               <label>Từ ngày:</label>
-              <input 
-                type="date" 
-                value={dateFilter.from} 
-                onChange={(e) => handleDateFilterChange('from', e.target.value)}
+              <DatePicker
+                selected={dateFilter.from}
+                onChange={date => handleDateFilterChange('from', date)}
+                locale="vi"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="date-picker"
+                isClearable
               />
             </div>
             <div className="date-input-group">
               <label>Đến ngày:</label>
-              <input 
-                type="date" 
-                value={dateFilter.to} 
-                onChange={(e) => handleDateFilterChange('to', e.target.value)}
+              <DatePicker
+                selected={dateFilter.to} 
+                onChange={date => handleDateFilterChange('to', date)}
+                locale="vi"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="date-picker"
+                isClearable
               />
             </div>
           </div>
@@ -231,6 +339,8 @@ const SpaAppointmentsPage = () => {
       
       {loading ? (
         <div className="loading">Đang tải dữ liệu...</div>
+      ) : error ? (
+        <div className="error-message">{error}</div>
       ) : appointments.length === 0 ? (
         <div className="no-data">Không tìm thấy lịch hẹn nào</div>
       ) : (
@@ -246,6 +356,16 @@ const SpaAppointmentsPage = () => {
             onPageChange={setCurrentPage}
           />
         </>
+      )}
+      
+      {showDeleteModal && (
+        <DeleteConfirmationModal
+          title="Xóa lịch hẹn"
+          message={`Bạn có chắc chắn muốn xóa lịch hẹn #${appointmentToDelete?.id} của khách hàng ${appointmentToDelete?.full_name} không?`}
+          warningMessage="Lưu ý: Việc xóa lịch hẹn sẽ ảnh hưởng đến dữ liệu thống kê và lịch sử dịch vụ. Nếu lịch hẹn đã được thanh toán hoặc đã hoàn thành, bạn nên đánh dấu là đã hủy thay vì xóa."
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       )}
     </div>
   );

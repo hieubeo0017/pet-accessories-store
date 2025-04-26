@@ -1,5 +1,5 @@
 const petModel = require('../models/petModel');
-const { sql } = require('../config/database');
+const { sql, connectDB } = require('../config/database');
 
 exports.getAllPets = async (req, res) => {
   try {
@@ -200,5 +200,44 @@ exports.getFeaturedPets = async (req, res) => {
   } catch (error) {
     console.error('Error getting featured pets:', error);
     res.status(500).json({ message: 'Lỗi khi lấy danh sách thú cưng nổi bật', error: error.message });
+  }
+};
+
+// Thêm hàm mới vào petController
+exports.getBreeds = async (req, res) => {
+  try {
+    const { type } = req.query; // 'dog' hoặc 'cat' hoặc undefined để lấy tất cả
+    
+    const pool = await connectDB();
+    let query = `
+      SELECT DISTINCT breed
+      FROM pets
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    // Lọc theo loại thú cưng nếu có
+    if (type && (type === 'dog' || type === 'cat')) {
+      query += ' AND type = @type';
+      params.push({ name: 'type', value: type, type: sql.VarChar(20) });
+    }
+    
+    query += ' ORDER BY breed';
+    
+    const request = pool.request();
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const result = await request.query(query);
+    
+    res.json({
+      message: 'Lấy danh sách giống thành công',
+      data: result.recordset.map(item => item.breed)
+    });
+  } catch (error) {
+    console.error('Error getting breeds:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách giống', error: error.message });
   }
 };

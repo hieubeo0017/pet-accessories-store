@@ -76,6 +76,16 @@
   color: #6200ea;
 }
 
+/* Thêm style cho tag dịch vụ nổi bật */
+.tag-featured {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.tag-featured i {
+  margin-right: 5px;
+}
+
 /* Giá dịch vụ */
 .service-price {
   margin: 20px 0;

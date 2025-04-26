@@ -9,39 +9,62 @@ const SpaServiceDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Hàm xử lý đường dẫn ảnh
+  const getImageUrl = (serviceData) => {
+    if (serviceData.images && serviceData.images.length > 0) {
+      const primaryImage = serviceData.images.find(img => img.is_primary);
+      if (primaryImage && primaryImage.image_url) {
+        return primaryImage.image_url;
+      }
+      return serviceData.images[0].image_url;
+    }
+    
+    return serviceData.image_url || '/images/spa/default-service.jpg';
+  };
+
+  const getFullImageUrl = (url) => {
+    if (!url) return '/images/spa/default-service.jpg';
+    
+    if (url.startsWith('http') || url.startsWith('/')) {
+      return url;
+    }
+    
+    return `http://localhost:5000/${url.startsWith('/') ? url.substring(1) : url}`;
+  };
+
   useEffect(() => {
     const loadServiceDetails = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Thay thế API call bằng dữ liệu mô phỏng trong khi phát triển
-        // const response = await fetchSpaServiceById(id);
+        console.log(`Fetching service details for ID: ${id}`);
+        const response = await fetchSpaServiceById(id);
         
-        // Dữ liệu mô phỏng
-        setTimeout(() => {
-          const mockService = {
-            id: id,
-            name: "Tắm và vệ sinh toàn diện",
-            description: "Dịch vụ tắm và vệ sinh chuyên nghiệp với các sản phẩm cao cấp, giúp làm sạch lông, da và loại bỏ mùi hôi. Bao gồm cắt móng, vệ sinh tai và các chăm sóc cơ bản khác.",
-            price: "250000",
-            duration: "60",
-            pet_type: "dog",
-            pet_size: "all",
-            image_url: "/images/spa/service-bath.jpg"
-          };
-          
-          setService(mockService);
-          setLoading(false);
-        }, 500); // giả lập delay API
+        console.log('API response:', response);
         
+        // Thay đổi cách xử lý response từ API
+        if (response && response.data) {
+          // Nếu response.data là object có các thuộc tính cần thiết
+          setService(response.data);
+        } else if (response) {
+          // Nếu response trực tiếp là dữ liệu cần thiết (không có .data)
+          setService(response);
+        } else {
+          setError('Không tìm thấy thông tin dịch vụ');
+        }
       } catch (err) {
         console.error('Error loading service details:', err);
         setError('Không thể tải thông tin chi tiết dịch vụ');
+      } finally {
         setLoading(false);
       }
     };
 
-    loadServiceDetails();
+    if (id) {
+      loadServiceDetails();
+    }
+    
     window.scrollTo(0, 0);
   }, [id]);
 
@@ -55,17 +78,30 @@ const SpaServiceDetailPage = () => {
   }
 
   if (error || !service) {
-    return <div className="error-message">{error || 'Không tìm thấy dịch vụ'}</div>;
+    return (
+      <div className="error-message">
+        {error || 'Không tìm thấy dịch vụ hoặc có lỗi xảy ra'}
+        <div className="error-actions">
+          <Link to="/spa/services" className="back-button">Quay lại danh sách dịch vụ</Link>
+        </div>
+      </div>
+    );
   }
+
+  const imageSrc = getFullImageUrl(getImageUrl(service));
 
   return (
     <div className="spa-service-detail-page">
       <div className="service-detail-container">
         <div className="service-image-container">
           <img 
-            src={service.image_url || '/images/spa/default-service.jpg'} 
+            src={imageSrc} 
             alt={service.name} 
             className="service-detail-image"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/spa/default-service.jpg';
+            }}
           />
         </div>
         
@@ -85,6 +121,11 @@ const SpaServiceDetailPage = () => {
                service.pet_size === 'medium' ? 'Thú vừa' : 
                service.pet_size === 'large' ? 'Thú lớn' : 'Mọi kích cỡ'}
             </span>
+            {service.is_featured && (
+              <span className="service-tag tag-featured">
+                <i className="fas fa-star"></i> Dịch vụ nổi bật
+              </span>
+            )}
           </div>
           
           <div className="service-price">

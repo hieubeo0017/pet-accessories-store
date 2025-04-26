@@ -23,6 +23,9 @@ import SpaBookingPage from './pages/SpaBookingPage';
 // Thêm các import
 import SpaAppointmentsPage from './pages/SpaAppointmentsPage';
 import SpaReviewPage from './pages/SpaReviewPage';
+import SpaBookingConfirmation from './pages/SpaBookingConfirmation';
+// Thêm import
+import PaymentCallbackPage from './pages/PaymentCallbackPage';
 
 const App = () => {
   return (
@@ -48,6 +51,10 @@ const App = () => {
           <Route path="/spa/booking" element={<SpaBookingPage />} />
           <Route path="/spa/appointments" element={<SpaAppointmentsPage />} />
           <Route path="/spa/review/:id" element={<SpaReviewPage />} />
+          <Route path="/spa/booking/confirmation/:id" element={<SpaBookingConfirmation />} />
+          
+          {/* Route cho payment callback */}
+          <Route path="/payment/callback" element={<PaymentCallbackPage />} />
         </Routes>
       </main>
       <Footer />

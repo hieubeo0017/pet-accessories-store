@@ -313,6 +313,154 @@
   margin: 30px 0;
 }
 
+.appointment-time .form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.appointment-time .form-row .form-group {
+  flex: 1;
+  width: 50%;
+}
+
+.appointment-time select {
+  width: 100%;
+  height: 45px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8.825L1.175 4 2.05 3.125 6 7.075 9.95 3.125 10.825 4 6 8.825z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+}
+
+/* CSS cho phần khung giờ */
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.time-slot {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.time-slot:hover {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.time-slot.selected {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 3px 8px rgba(30, 136, 229, 0.25);
+}
+
+.time-slot.disabled {
+  background-color: #f5f5f5;
+  border-color: #e0e0e0;
+  color: #9e9e9e;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.time-slot .time {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.time-slot .slot-count {
+  font-size: 14px;
+  color: #666;
+  display: block;
+}
+
+.time-slot.selected .slot-count {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.no-slots-message {
+  grid-column: span 4;
+  padding: 30px 15px;
+  text-align: center;
+  color: #757575;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background-color: #fafafa;
+  font-size: 15px;
+}
+
+.loading-time-slots {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 15px;
+  color: var(--primary-color);
+}
+
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(30, 136, 229, 0.2);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .time-slots {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .no-slots-message {
+    grid-column: span 3;
+  }
+  
+  .loading-time-slots {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 576px) {
+  .time-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .no-slots-message,
+  .loading-time-slots {
+    grid-column: span 2;
+  }
+}
+
 /* Booking summary */
 .booking-summary {
   background-color: var(--light-blue-bg);
@@ -459,6 +607,11 @@
   color: #4CAF50;
   font-size: 14px;
   font-weight: normal;
+  margin-left: 8px;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
 }
 
 .auth-modal {
@@ -484,6 +637,97 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* CSS cho DatePicker Việt hóa */
+.custom-date-container {
+  position: relative;
+  width: 100%;
+  display: flex; /* Đảm bảo các phần tử con nằm trong một dòng */
+  align-items: center; /* Căn giữa các phần tử theo chiều dọc */
+}
+
+/* Input */
+.date-input {
+  width: 100% !important;
+  height: 45px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+  background-color: white;
+  cursor: pointer;
+}
+
+/* Fix cho React DatePicker wrapper */
+.react-datepicker-wrapper,
+.react-datepicker__input-container {
+  display: block;
+  width: 100%;
+}
+
+/* Tùy chỉnh giao diện DatePicker */
+.react-datepicker {
+  font-family: 'Roboto', sans-serif !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-datepicker__header {
+  background-color: #1976d2 !important;
+  border-bottom: none !important;
+  padding: 12px 0 8px !important;
+}
+
+.react-datepicker__current-month {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.react-datepicker__day-names {
+  background-color: #1565c0 !important;
+}
+
+.react-datepicker__day-name {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: #1976d2 !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+
+.react-datepicker__today-button {
+  background-color: #e3f2fd !important;
+  color: #1976d2 !important;
+  font-weight: 500 !important;
+}
+
+/* Dropdown tháng và năm */
+.react-datepicker__month-dropdown-container,
+.react-datepicker__year-dropdown-container {
+  margin: 0 5px !important;
+}
+
+.react-datepicker__month-dropdown,
+.react-datepicker__year-dropdown {
+  background-color: white !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-datepicker__month-option,
+.react-datepicker__year-option {
+  padding: 8px !important;
+}
+
+.react-datepicker__month-option:hover,
+.react-datepicker__year-option:hover {
+  background-color: #e3f2fd !important;
 }
 
 /* Responsive styles */
@@ -558,4 +802,44 @@
     font-size: 12px;
     padding: 0 2px;
   }
+}
+
+/* Thêm vào cuối file để ghi đè màu cho mũi tên dropdown */
+
+/* Thay đổi màu cho indicator (mũi tên xuống) */
+.css-1xc3v61-indicatorContainer {
+  color: var(--primary-color) !important; /* Màu xanh từ biến primary-color */
+}
+
+/* Hoặc chỉ định trực tiếp màu xanh */
+.css-1xc3v61-indicatorContainer {
+  color: #1976d2 !important; /* Xanh primary */
+}
+
+/* Đảm bảo khi hover cũng có màu xanh đậm hơn */
+.css-1xc3v61-indicatorContainer:hover {
+  color: #1565c0 !important; /* Xanh đậm hơn khi hover */
+}
+
+/* CSS thay thế nếu class cụ thể không hoạt động */
+.breed-select .react-select__dropdown-indicator {
+  color: #1976d2 !important;
+}
+
+.breed-select .react-select__dropdown-indicator:hover {
+  color: #1565c0 !important;
+}
+
+/* Thêm phạm vi cho nút đặt lịch hẹn */
+
+.spa-booking-page .btn-primary {
+  /* Các thuộc tính CSS riêng cho nút đặt lịch */
+  background-color: #3182ce;
+  color: white;
+  /* Các thuộc tính khác */
+}
+
+.spa-booking-page .btn-primary:hover {
+  background-color: #2b6cb0;
+  /* Các thuộc tính hover khác */
 }

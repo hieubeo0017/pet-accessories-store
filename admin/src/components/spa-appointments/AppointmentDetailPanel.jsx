@@ -1,18 +1,15 @@
 import { useState } from 'react';
-import { updateAppointmentStatus, updatePaymentStatus } from '../../services/spaAppointmentService';
 import { formatDate, formatTime, formatCurrency } from '../../utils/formatters';
 
-const AppointmentDetailPanel = ({ appointment, onStatusUpdate }) => {
+const AppointmentDetailPanel = ({ appointment, onStatusUpdate, onPaymentUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   
   const handleStatusChange = async (status) => {
     try {
       setIsUpdating(true);
-      await updateAppointmentStatus(appointment.id, status);
-      onStatusUpdate();
+      await onStatusUpdate(status);
     } catch (error) {
       console.error('Error updating appointment status:', error);
-      alert('Không thể cập nhật trạng thái lịch hẹn.');
     } finally {
       setIsUpdating(false);
     }
@@ -21,11 +18,9 @@ const AppointmentDetailPanel = ({ appointment, onStatusUpdate }) => {
   const handlePaymentStatusChange = async (status) => {
     try {
       setIsUpdating(true);
-      await updatePaymentStatus(appointment.id, status);
-      onStatusUpdate();
+      await onPaymentUpdate(status);
     } catch (error) {
       console.error('Error updating payment status:', error);
-      alert('Không thể cập nhật trạng thái thanh toán.');
     } finally {
       setIsUpdating(false);
     }

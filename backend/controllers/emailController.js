@@ -136,6 +136,67 @@ const emailController = {
         error: err.message
       });
     }
+  },
+
+  sendOtpEmail: async (to, code) => {
+    try {
+      const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      
+      // Setup email data
+      sendSmtpEmail.to = [{ email: to }];
+      sendSmtpEmail.subject = "Mã xác thực đặt lịch spa thú cưng";
+      sendSmtpEmail.htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Xác thực địa chỉ email</h2>
+          <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.</p>
+          <p>Vui lòng sử dụng mã xác thực 6 chữ số sau để hoàn tất quá trình đặt lịch:</p>
+          <div style="font-size: 24px; font-weight: bold; padding: 15px; background-color: #f5f5f5; text-align: center; letter-spacing: 5px; margin: 20px 0;">
+            ${code}
+          </div>
+          <p>Mã xác thực có hiệu lực trong 15 phút.</p>
+        </div>
+      `;
+      
+      // Cấu hình sender
+      sendSmtpEmail.sender = {
+        name: process.env.DEFAULT_SENDER_NAME || 'Pet Accessories Store',
+        email: process.env.EMAIL_FROM || 'chuthibinh201@gmail.com'
+      };
+      
+      // Send the email
+      const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      return { success: true, data };
+    } catch (err) {
+      console.error('Lỗi khi gửi email OTP:', err);
+      throw err;
+    }
+  },
+
+  // Gửi email xác nhận đặt lịch
+  sendBookingConfirmationEmail: async (to, subject, htmlContent) => {
+    try {
+      const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      
+      // Setup email data
+      sendSmtpEmail.to = [{ email: to }];
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = htmlContent;
+      
+      // Cấu hình sender
+      sendSmtpEmail.sender = {
+        name: process.env.DEFAULT_SENDER_NAME || 'Pet Accessories Store',
+        email: process.env.EMAIL_FROM || 'chuthibinh201@gmail.com'
+      };
+      
+      // Send the email
+      const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      return { success: true, data };
+    } catch (err) {
+      console.error('Lỗi khi gửi email xác nhận đặt lịch:', err);
+      throw err;
+    }
   }
 };
 

@@ -32,6 +32,12 @@ const brandRoutes = require('./routes/brandRoutes');
 const productRoutes = require('./routes/productRoutes');
 const petRoutes = require('./routes/petRoutes');
 const emailRoutes = require('./routes/emailRoutes'); // Add this line
+const spaServiceRoutes = require('./routes/spaServiceRoutes');
+const verificationRoutes = require('./routes/verificationRoutes'); // Thêm dòng này
+const spaAppointmentRoutes = require('./routes/spaAppointmentRoutes'); // Import routes (thêm dòng này vào phần import routes)
+const spaTimeSlotRoutes = require('./routes/spaTimeSlotRoutes'); // Thêm vào file server.js hoặc app.js
+const spaPaymentRoutes = require('./routes/spaPaymentRoutes'); // Thêm dòng này vào phần đăng ký routes trong server.js
+const vnpayRoutes = require('./routes/vnpayRoutes'); // Thêm vào phần import routes
 
 // Kết nối database
 connectDB()
@@ -46,6 +52,12 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/email', emailRoutes); // Add this line
+app.use('/api/spa-services', spaServiceRoutes);
+app.use('/api/verification', verificationRoutes); // Thêm dòng này
+app.use('/api/spa-appointments', spaAppointmentRoutes); // Routes (thêm dòng này vào phần đăng ký routes)
+app.use('/api/spa-time-slots', spaTimeSlotRoutes); // Thêm vào file server.js hoặc app.js
+app.use('/api/payments', spaPaymentRoutes); // Thêm dòng này vào phần đăng ký routes trong server.js
+app.use('/api/vnpay', vnpayRoutes); // Thêm vào phần đăng ký routes
 
 // Basic test route
 app.get('/', (req, res) => {

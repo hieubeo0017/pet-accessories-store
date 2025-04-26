@@ -1,7 +1,179 @@
+/* Nâng cấp giao diện tìm kiếm lịch hẹn */
+
 .spa-appointments-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+/* Cải thiện header chính */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, #4a90e2, #63b3ed);
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 3px;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #2a4365;
+  margin-bottom: 12px;
+}
+
+.page-header p {
+  font-size: 17px;
+  color: #4a5568;
+  font-weight: 400;
+}
+
+/* Form tìm kiếm */
+.search-appointments-form {
+  max-width: 550px;
+  margin: 50px auto;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-container {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  text-align: center;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.form-container h2 {
+  color: #2b6cb0;
+  margin-bottom: 16px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.form-container p {
+  color: #718096;
+  margin-bottom: 30px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Tùy chọn tìm kiếm */
+.search-options {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.search-options label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.search-options label:hover {
+  background-color: #ebf8ff;
+  border-color: #bee3f8;
+}
+
+.search-options input[type="radio"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e0;
+  border-radius: 50%;
+  outline: none;
+  margin: 0;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.search-options input[type="radio"]:checked {
+  border-color: #3182ce;
+}
+
+.search-options input[type="radio"]:checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: #3182ce;
+  border-radius: 50%;
+}
+
+.search-options input[type="radio"]:focus {
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+/* Trường nhập liệu */
+.form-group {
+  margin-bottom: 30px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  background-color: #f8fafc;
+}
+
+.form-group input:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.25);
+  outline: none;
+}
+
+.form-group input::placeholder {
+  color: #a0aec0;
+}
+
+/* Nút tìm kiếm */
+.spa-appointments-page button.btn-primary,
+.search-appointments-form button.btn-primary {
+  background-color: #3182ce;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 30px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
 }
 
 /* Header của trang */
@@ -31,7 +203,10 @@
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  margin-bottom: 25px;
+  margin-bottom: 15px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -43,7 +218,7 @@
 
 /* Header của card */
 .appointment-header {
-  padding: 15px 20px;
+  padding: 10px 15px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #eee;
   display: flex;
@@ -90,15 +265,209 @@
   color: #7b1fa2;
 }
 
-/* Thông tin chi tiết lịch hẹn */
+/* Cải thiện bố cục cho appointment-details */
 .appointment-details {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 20px;
+  gap: 15px;
+  padding: 15px;
   border-bottom: 1px solid #eee;
 }
 
+/* Thêm border và tăng padding cho các thành phần bên trong */
+.pet-info, .appointment-time, .services-list {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Giảm khoảng cách giữa các hàng trong phần thông tin */
+.pet-info p, .appointment-time p {
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+/* Nâng cấp phần hiển thị dịch vụ */
+.services-list {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.services-list h4 {
+  color: #2a6496;
+  border-bottom: 2px solid #eaf1f7;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.services-list h4::before {
+  content: "\f0c0";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 10px;
+  font-size: 16px;
+  color: #4a90e2;
+}
+
+.services-list ul {
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.service-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #f9fcff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.service-item:hover {
+  background-color: #eaf1f7;
+  transform: translateX(3px);
+}
+
+.service-item:last-child {
+  margin-bottom: 0;
+}
+
+.service-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #2a6496;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.service-name i {
+  margin-right: 8px;
+  color: #4a90e2;
+}
+
+.service-details {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.service-duration {
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.service-duration i {
+  margin-right: 5px;
+  color: #888;
+}
+
+.service-price {
+  font-weight: 600;
+  color: #37b24d;
+  font-size: 16px;
+}
+
+/* Đặt services-list và total-amount full width */
+.services-list, .total-amount-container {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+}
+
+.appointment-details h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--secondary-color);
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.appointment-details p {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* Điều chỉnh phần tổng tiền */
+
+/* Container chứa phần tổng tiền */
+.total-amount-container {
+  margin-top: 20px;
+  padding: 15px 20px;
+  border-radius: 0 0 8px 8px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Định dạng cho dòng tổng tiền */
+.total-amount {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+/* Từ "Tổng tiền" */
+.total-amount strong {
+  color: #000;
+  margin-right: 12px;
+  font-weight: 700;
+}
+
+/* Giá trị tiền */
+.total-amount span {
+  color: #0070c9;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* Khi nằm trong thẻ cao nhất */
+.appointment-details .total-amount-container {
+  margin-top: 0;
+  background-color: #f8f9fa;
+}
+
+/* Cải thiện danh sách dịch vụ */
+.services-list ul {
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+.services-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.services-list li:last-child {
+  border-bottom: none;
+}
+
+/* Thông tin chi tiết lịch hẹn */
 .appointment-info h3,
 .appointment-schedule h3,
 .appointment-services h3 {
@@ -169,36 +538,34 @@
 
 /* Phần nút thao tác */
 .appointment-actions {
-  padding: 20px;
+  padding: 16px 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
+  justify-content: center;
 }
 
 .btn-cancel,
 .btn-reschedule,
-.btn-review,
-.btn-details {
-  padding: 10px 15px;
-  border-radius: 6px;
-  font-size: 14px;
+.btn-review {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  text-decoration: none;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+  transition: all 0.3s ease;
 }
 
+/* Giữ lại màu sắc gốc cho các nút */
 .btn-cancel {
   background-color: #ffebee;
   color: #d32f2f;
   border: 1px solid #ffcdd2;
-}
-
-.btn-cancel:hover {
-  background-color: #ffcdd2;
 }
 
 .btn-reschedule {
@@ -207,28 +574,47 @@
   border: 1px solid #c8e6c9;
 }
 
-.btn-reschedule:hover {
-  background-color: #c8e6c9;
-}
-
 .btn-review {
   background-color: #fff8e1;
   color: #ff8f00;
   border: 1px solid #ffe082;
 }
 
+/* Hiệu ứng hover */
+.btn-cancel:hover,
+.btn-reschedule:hover,
+.btn-review:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cũng giữ lại hiệu ứng hover riêng cho từng nút */
+.btn-cancel:hover {
+  background-color: #ffcdd2;
+}
+
+.btn-reschedule:hover {
+  background-color: #c8e6c9;
+}
+
 .btn-review:hover {
   background-color: #ffe082;
 }
 
-.btn-details {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  border: 1px solid #bbdefb;
+/* Đảm bảo icon có kích thước phù hợp với nút */
+.btn-cancel i,
+.btn-reschedule i,
+.btn-review i {
+  font-size: 16px;
 }
 
-.btn-details:hover {
-  background-color: #bbdefb;
+/* Điều chỉnh responsive */
+@media (max-width: 576px) {
+  .btn-cancel,
+  .btn-reschedule,
+  .btn-review {
+    width: 100%;
+  }
 }
 
 /* Trạng thái không có lịch hẹn */
@@ -355,24 +741,58 @@
 }
 
 .forget-info-btn {
-  background: transparent;
-  border: none;
-  color: #666;
-  text-decoration: underline;
-  cursor: pointer;
-  margin: 20px auto;
   display: block;
+  width: max-content;
+  margin: 30px auto;
+  padding: 10px 20px;
+  background-color: #f5f7fa;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.forget-info-btn::before {
+  content: "\f2f5";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 10px;
+  color: #3182ce;
 }
 
 .forget-info-btn:hover {
-  color: var(--primary-color);
+  background-color: #ebf4ff;
+  border-color: #bee3f8;
+  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.15);
+  transform: translateY(-1px);
 }
 
-/* Responsive */
+.forget-info-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Thêm thẻ link xuống dưới cho mobile */
 @media (max-width: 768px) {
   .appointment-details {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .pet-info, .appointment-time, .services-list {
+    padding: 15px;
+  }
+  
+  .total-amount {
+    font-size: 16px;
   }
 
   .appointment-actions {
@@ -383,8 +803,257 @@
   .btn-cancel,
   .btn-reschedule,
   .btn-review,
-  .btn-details {
+  .btn-details,
+  .btn-restore {
     width: 100%;
     justify-content: center;
   }
+
+  .forget-info-btn {
+    width: calc(100% - 40px);
+    max-width: 400px;
+    padding: 12px 20px;
+    margin-bottom: 40px;
+  }
+}
+
+/* CSS cho DatePicker và Time Slots */
+.date-picker-container {
+  position: relative;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.time-slots-selection {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.time-slot-option {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.time-slot-option:hover {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.time-slot-option.selected {
+  background-color: #2196f3;
+  color: white;
+  border-color: #1976d2;
+}
+
+.time-slot-option.disabled {
+  opacity: 0.5;
+  background-color: #f1f1f1;
+  cursor: not-allowed;
+}
+
+.time-slot-option .time {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.time-slot-option .availability {
+  font-size: 13px;
+  color: #666;
+}
+
+.time-slot-option.selected .availability {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.loading-time-slots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  color: #666;
+}
+
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.no-slots-message {
+  text-align: center;
+  padding: 15px;
+  color: #f44336;
+  background-color: #ffebee;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+/* Thêm vào cuối file */
+.reschedule-confirmation {
+  padding: 15px 0;
+}
+
+.comparison-container {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 15px 0;
+  border: 1px solid #e2e8f0;
+}
+
+.appointment-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.original-appointment, .new-appointment {
+  width: 45%;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.original-appointment h4, .new-appointment h4 {
+  margin-bottom: 15px;
+}
+
+.arrow-icon {
+  font-size: 24px;
+  color: #90a4ae;
+}
+
+.appointment-comparison h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #455a64;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding-bottom: 8px;
+}
+
+.confirm-text {
+  margin: 20px 0;
+  text-align: center;
+  font-weight: 500;
+  color: #455a64;
+}
+
+/* Thiết kế ngang cho phần xác nhận đổi lịch */
+.horizontal-layout .appointment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.horizontal-layout .detail-row {
+  display: flex;
+  align-items: center;
+}
+
+.horizontal-layout .detail-label {
+  width: 60px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.horizontal-layout .detail-value {
+  margin-bottom: 0;
+}
+
+/* Điều chỉnh độ rộng các khối để chúng thẳng hàng */
+.original-appointment, .new-appointment {
+  width: 45%;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.original-appointment h4, .new-appointment h4 {
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .appointment-comparison {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .original-appointment, .new-appointment {
+    width: 100%;
+  }
+  
+  .arrow-icon {
+    transform: rotate(90deg);
+  }
+}
+
+/* Styling cho nút thanh toán */
+.btn-payment {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-payment:hover {
+  background-color: #43a047;
+  transform: translateY(-2px);
+}
+
+/* Styling cho nút lịch sử thanh toán */
+.btn-history {
+  background-color: #757575;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-history:hover {
+  background-color: #616161;
+  transform: translateY(-2px);
 }

@@ -1,0 +1,286 @@
+.payment-history {
+  margin-top: 20px;
+}
+
+.payment-history h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.payment-list {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.payment-item {
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.payment-item:last-child {
+  border-bottom: none;
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.payment-id {
+  font-weight: 500;
+  color: #495057;
+}
+
+.payment-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-failed {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.info-label {
+  width: 120px;
+  flex-shrink: 0;
+  color: #6c757d;
+}
+
+.info-value {
+  flex-grow: 1;
+}
+
+.info-value.amount {
+  font-weight: 500;
+  color: #0070c9;
+}
+
+.info-row.notes {
+  margin-top: 5px;
+}
+
+.payment-history.loading,
+.payment-history.error,
+.payment-history.empty {
+  text-align: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #6c757d;
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #0070c9;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Reset các style cũ không cần thiết */
+.ph-payment-history {
+  width: 100%;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Thiết lập chung */
+.ph-payment-history {
+  margin: 0;
+  padding: 0 15px;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+}
+
+.ph-payment-history h2 {
+  font-size: 20px;
+  color: #0056b3;
+  margin-bottom: 20px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+/* Container cho bảng */
+.ph-history-table-container {
+  width: 100%;
+  overflow-x: visible; /* Bỏ cuộn ngang */
+  max-height: none; /* Bỏ giới hạn chiều cao */
+  margin-bottom: 15px;
+}
+
+/* Style cho bảng */
+.ph-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: white;
+}
+
+.ph-history-table thead {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.ph-history-table th {
+  text-align: left;
+  padding: 12px 15px;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.ph-history-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* Định dạng các cột cụ thể */
+.ph-transaction-id {
+  width: 15%;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.ph-payment-method {
+  width: 12%;
+}
+
+.ph-amount {
+  width: 10%;
+  font-weight: 500;
+  color: #0d6efd;
+}
+
+.ph-payment-time {
+  width: 15%;
+  white-space: normal;
+}
+
+.ph-notes {
+  width: 33%;
+  max-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* Cập nhật style cho trạng thái */
+.ph-status-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.ph-status-completed {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.ph-status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.ph-status-failed, 
+.ph-status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Style cho thông báo trống */
+.ph-no-history {
+  text-align: center;
+  padding: 25px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Style cho loading và error */
+.ph-loading, 
+.ph-error-message {
+  text-align: center;
+  padding: 25px;
+  color: #6c757d;
+}
+
+.ph-spinner-small {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #0d6efd;
+  animation: ph-spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes ph-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Modal container và body */
+.ph-modal-container {
+  max-width: 900px !important; /* Cố định kích thước modal để hiển thị đầy đủ */
+  width: 900px !important;
+  height: auto;
+  max-height: 80vh !important;
+}
+
+.ph-modal-body {
+  padding: 0 !important; /* Bỏ padding để bảng sát cạnh */
+}
+
+/* Overrides cho modal lớn hơn */
+.ph-modal-container {
+  max-width: 95% !important;
+  width: 95% !important;
+  height: auto;
+  max-height: 90vh !important;
+}
+
+.ph-modal-body {
+  padding: 15px !important;
+}

@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+// Định nghĩa API_URL ở mức file để tất cả các hàm có thể sử dụng
+const API_URL = 'http://localhost:5000/api';
+
 // Tạo instance axios cho API
 const api = axios.create({
-  baseURL: '/api', // Sử dụng đường dẫn tương đối để tận dụng proxy
+  baseURL: API_URL, // Sử dụng đường dẫn tuyệt đối
   headers: {
     'Content-Type': 'application/json'
   }
@@ -172,7 +175,7 @@ export const fetchFeaturedBrands = async (params = {}) => {
 // Lấy danh sách dịch vụ spa nổi bật
 export const fetchFeaturedSpaServices = async (params = {}) => {
   try {
-    const limit = params.limit || 4;
+    const limit = params.limit || 6; // Đã thay đổi từ 4 thành 6
     
     const response = await api.get(`/spa-services/featured?limit=${limit}`);
     return response.data;
@@ -190,12 +193,22 @@ export const fetchSpaServices = async (params = {}) => {
     if (params.page) queryParams.append('page', params.page);
     if (params.limit) queryParams.append('limit', params.limit);
     if (params.search) queryParams.append('search', params.search);
-    if (params.petType && params.petType !== 'all') queryParams.append('petType', params.petType);
-    if (params.petSize && params.petSize !== 'all') queryParams.append('petSize', params.petSize);
-    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
     
-    const response = await api.get(`/spa-services?${queryParams.toString()}`);
+    // Chỉ gửi pet_type khi giá trị khác 'all'
+    if (params.petType && params.petType !== 'all') {
+      queryParams.append('pet_type', params.petType);
+    }
+    
+    // Chỉ gửi pet_size khi giá trị khác 'all'
+    if (params.petSize && params.petSize !== 'all') {
+      queryParams.append('pet_size', params.petSize);
+    }
+    
+    // Log URL để debug
+    const url = `/spa-services?${queryParams.toString()}`;
+    console.log('API request URL:', url);
+    
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching spa services:', error);
@@ -204,21 +217,27 @@ export const fetchSpaServices = async (params = {}) => {
 };
 
 // Lấy chi tiết một dịch vụ spa theo ID
-export const fetchSpaServiceById = async (serviceId) => {
+export const fetchSpaServiceById = async (id) => {
   try {
-    const response = await api.get(`/spa-services/${serviceId}`);
+    // Đảm bảo gọi đúng endpoint
+    const response = await api.get(`/spa-services/${id}`);
+    
+    // Debug để kiểm tra response
+    console.log(`Service data for ${id}:`, response.data);
+    
+    // Trả về response phù hợp với cấu trúc backend
     return response.data;
   } catch (error) {
-    console.error(`Error fetching spa service with id ${serviceId}:`, error);
+    console.error(`Error fetching spa service with ID ${id}:`, error);
     throw error;
   }
 };
 
 // Tạo lịch hẹn spa mới
-export const createSpaAppointment = async (appointmentData) => {
+export const createSpaAppointment = async (bookingData) => {
   try {
-    const response = await api.post('/spa-appointments', appointmentData);
-    return response.data;
+    const response = await api.post('/spa-appointments', bookingData);
+    return response;
   } catch (error) {
     console.error('Error creating spa appointment:', error);
     throw error;
@@ -239,21 +258,58 @@ export const getUserSpaAppointments = async () => {
 // Hủy lịch hẹn spa
 export const cancelSpaAppointment = async (appointmentId) => {
   try {
-    const response = await api.put(`/spa-appointments/${appointmentId}/cancel`);
+    const response = await axios.put(`/api/spa-appointments/${appointmentId}/status`, {
+      status: 'cancelled'
+    });
     return response.data;
   } catch (error) {
-    console.error('Error cancelling spa appointment:', error);
+    console.error('Error cancelling appointment:', error);
     throw error;
   }
 };
 
 // Đổi lịch hẹn spa
-export const rescheduleSpaAppointment = async (appointmentId, rescheduleData) => {
+export const rescheduleSpaAppointment = async (appointmentId, { date, time }) => {
   try {
-    const response = await api.put(`/spa-appointments/${appointmentId}/reschedule`, rescheduleData);
+    // Format lại date nếu là ISO string hoặc Date object
+    let formattedDate = date;
+    
+    // Nếu date chứa ký tự 'T' (là định dạng ISO)
+    if (typeof date === 'string' && date.includes('T')) {
+      formattedDate = date.split('T')[0];
+    } 
+    // Nếu date là Date object
+    else if (date instanceof Date) {
+      formattedDate = date.toISOString().split('T')[0];
+    }
+    
+    const formattedTime = time.includes(':00') ? time : `${time}:00`;
+    
+    console.log('Gửi request đổi lịch với dữ liệu:', {
+      appointment_date: formattedDate,
+      appointment_time: formattedTime
+    });
+    
+    const response = await api.put(`/spa-appointments/${appointmentId}/reschedule`, {
+      appointment_date: formattedDate,
+      appointment_time: formattedTime
+    });
+    
+    console.log('Kết quả response từ API đổi lịch:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error rescheduling spa appointment:', error);
+    console.error('Error rescheduling appointment:', error);
+    throw error;
+  }
+};
+
+// Khôi phục lịch hẹn spa
+export const restoreSpaAppointment = async (appointmentId) => {
+  try {
+    const response = await axios.put(`/api/spa-appointments/${appointmentId}/restore`);
+    return response.data;
+  } catch (error) {
+    console.error('Error restoring appointment:', error);
     throw error;
   }
 };
@@ -276,6 +332,197 @@ export const submitSpaReview = async (appointmentId, reviewData) => {
     return response.data;
   } catch (error) {
     console.error('Error submitting spa review:', error);
+    throw error;
+  }
+};
+
+// Thêm các hàm API cho xác thực email và đặt lịch spa
+export const sendVerificationCode = async (email) => {
+  try {
+    const response = await api.post('/verification/send-code', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending verification code:', error);
+    throw error;
+  }
+};
+
+export const verifyEmailCode = async (email, code) => {
+  try {
+    const response = await api.post('/verification/verify-code', { 
+      email, 
+      code 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying code:', error);
+    throw error;
+  }
+};
+
+// Thêm API kiểm tra khả dụng khung giờ
+export const fetchTimeSlotAvailability = async (date) => {
+  try {
+    const response = await api.get(`/spa-appointments/availability?date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking time slot availability:', error);
+    throw error;
+  }
+};
+
+// Thêm hàm mới để gọi API lấy danh sách giống
+export const fetchBreeds = async (type = '') => {
+  try {
+    // Log để kiểm tra tham số type
+    console.log('Fetching breeds for type:', type);
+    
+    // Sử dụng API_URL đã định nghĩa
+    let url = `${API_URL}/pets/breeds`;
+    if (type && type !== 'all') {
+      url += `?type=${type}`;
+    }
+    
+    const response = await axios.get(url);
+    
+    // Log kết quả trả về
+    console.log('Breeds API response:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching breeds:', error);
+    // Trả về mảng rỗng khi có lỗi để tránh crash app
+    return { data: [] };
+  }
+};
+
+// Hàm tìm kiếm lịch hẹn
+export const searchAppointments = async (searchData) => {
+  try {
+    // Sử dụng api instance đã được cấu hình với baseURL đúng
+    const response = await api.get('/spa-appointments/search', { 
+      params: searchData 
+    });
+    
+    // Xử lý dữ liệu trả về đúng cách
+    if (response.data.success && Array.isArray(response.data.data)) {
+      const formattedData = response.data.data.map(appointment => {
+        // Chỉ cho phép hủy khi trạng thái là pending (chờ xác nhận)
+        const canCancel = ['pending'].includes(appointment.status);
+        
+        // Cho phép đổi lịch khi trạng thái là pending HOẶC confirmed
+        const canReschedule = ['pending', 'confirmed'].includes(appointment.status);
+        
+        const canReview = appointment.status === 'completed' && appointment.payment_status === 'paid';
+        
+        // Chuẩn hóa dịch vụ nếu cần
+        const services = Array.isArray(appointment.services) 
+          ? appointment.services.map(service => ({
+              id: service.id || service.service_id,
+              service_id: service.service_id,
+              name: service.name || service.service_name,
+              price: service.price
+            }))
+          : [];
+        
+        return {
+          ...appointment,
+          appointment_id: appointment.id,
+          services,
+          can_cancel: canCancel,
+          can_reschedule: canReschedule,
+          can_review: canReview
+        };
+      });
+      
+      return {
+        success: true,
+        data: formattedData
+      };
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Search API error:', error);
+    throw error;
+  }
+};
+
+// Thêm export này vào file api.js
+export const fetchSpaTimeSlotAvailability = async (date) => {
+  try {
+    console.log('Calling availability API with date:', date);
+    const response = await axios.get(`/api/spa-time-slots/availability?date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking time slot availability:', error);
+    return { success: false, data: {} };
+  }
+};
+
+// Tạo thanh toán mới cho lịch hẹn
+export const createSpaPayment = async (appointmentId, paymentData) => {
+  try {
+    const response = await api.post(`/payments/appointments/${appointmentId}/payments`, paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    throw error;
+  }
+};
+
+// Lấy lịch sử thanh toán cho lịch hẹn
+export const getPaymentHistory = async (appointmentId) => {
+  try {
+    const response = await api.get(`/payments/appointments/${appointmentId}/payments`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching payment history:', error);
+    throw error;
+  }
+};
+
+// Tạo URL thanh toán VNPay cho lịch hẹn
+export const createVnPayUrl = async (appointmentId, amount, redirectUrl, bankCode = '') => {
+  try {
+    console.log('Tạo URL VNPay với thông tin:', {
+      appointment_id: appointmentId,
+      amount: amount,
+      redirect_url: redirectUrl
+    });
+    
+    // Đảm bảo URL chuyển hướng là về frontend
+    const returnUrl = `${window.location.origin}/payment/callback`;
+    
+    const response = await axios.post(`/api/vnpay/create-payment-url`, {
+      appointment_id: appointmentId,
+      amount: amount,
+      redirect_url: returnUrl,  // Về trang frontend
+      bankCode: bankCode,
+      useIpnUrl: true  // THÊM THAM SỐ NÀY để kích hoạt IPN URL trong backend
+    });
+    
+    console.log("VNPay URL response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating VNPay URL:', error);
+    throw error;
+  }
+};
+
+// Xác nhận thanh toán VNPay
+export const confirmVnpayPayment = async (queryParams) => {
+  try {
+    // Tạo URL với đầy đủ thông số từ VNPay
+    const params = new URLSearchParams(queryParams);
+    
+    // Sử dụng API endpoint đúng - có thể dùng api instance đã được cấu hình
+    const response = await api.get(`/vnpay/callback?${params.toString()}`);
+    
+    console.log("VNPay confirmation response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error confirming VNPay payment:', error);
     throw error;
   }
 };

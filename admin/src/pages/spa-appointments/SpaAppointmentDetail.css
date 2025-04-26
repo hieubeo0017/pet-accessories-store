@@ -195,3 +195,60 @@
   color: #C62828;
   border: 1px solid #FFCDD2;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.btn-edit, .btn-reschedule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.btn-reschedule {
+  background-color: #e8f5e9;
+  color: #388e3c;
+  border: 1px solid #c8e6c9;
+}
+
+.btn-edit:hover {
+  background-color: #bbdefb;
+}
+
+.btn-reschedule:hover {
+  background-color: #c8e6c9;
+}
+
+.spa-appointment-detail .btn-restore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #f3e5f5;
+  color: #9c27b0;
+  border: 1px solid #e1bee7;
+}
+
+.spa-appointment-detail .btn-restore:hover {
+  background-color: #e1bee7;
+}

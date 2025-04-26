@@ -67,6 +67,14 @@ const Sidebar = ({ collapsed }) => {
               {!collapsed && <span>Lịch hẹn Spa</span>}
             </NavLink>
           </li>
+
+          {/* Thêm liên kết đến khung giờ spa */}
+          <li>
+            <NavLink to="/spa-time-slots" className={({ isActive }) => isActive ? 'active' : ''}>
+              <i className="fas fa-clock"></i>
+              {!collapsed && <span>Khung giờ Spa</span>}
+            </NavLink>
+          </li>
           
           <li>
             <NavLink to="/reviews" className={({ isActive }) => isActive ? 'active' : ''}>

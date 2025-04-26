@@ -5,6 +5,7 @@ import TextareaInput from '../common/FormComponents/TextareaInput';
 import SelectInput from '../common/FormComponents/SelectInput';
 import FileUpload from '../common/FormComponents/FileUpload';
 import ImagePreview from '../common/FormComponents/ImagePreview';
+import { toast } from 'react-toastify';
 
 const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
   const [formData, setFormData] = useState(initialData || {
@@ -22,6 +23,37 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
   const [errors, setErrors] = useState({});
   const [images, setImages] = useState(initialData?.images || []);
   
+  // Cập nhật useEffect để ưu tiên sử dụng mảng images và bỏ qua image_url đơn lẻ
+  useEffect(() => {
+    // Chỉ khởi tạo nếu có dữ liệu ban đầu với mảng images 
+    if (initialData && initialData.images && initialData.images.length > 0) {
+      console.log("Loading images array:", initialData.images);
+      
+      // Chuẩn hóa các đối tượng hình ảnh từ mảng images
+      const normalizedImages = initialData.images.map(img => ({
+        id: img.id || null, // Giữ lại ID nếu có
+        url: img.image_url, // Sử dụng image_url từ đối tượng trong mảng
+        image_url: img.image_url,
+        is_primary: Boolean(img.is_primary),
+        display_order: img.display_order || 0
+      }));
+      
+      console.log("Normalized images:", normalizedImages);
+      setImages(normalizedImages);
+      
+      // Cập nhật formData để đồng bộ với images
+      setFormData(prevData => ({
+        ...prevData,
+        images: initialData.images.map(img => ({
+          id: img.id || null,
+          image_url: img.image_url,
+          is_primary: Boolean(img.is_primary),
+          display_order: img.display_order || 0
+        }))
+      }));
+    }
+  }, [initialData]);
+  
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -30,35 +62,51 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
     });
   };
   
+  // Cập nhật hàm handleImageUpload
   const handleImageUpload = async (uploadedImages) => {
     // Kiểm tra số lượng ảnh tối đa
     const totalImages = images.length + uploadedImages.length;
     
     if (totalImages > 5) {
-      alert('Chỉ được phép tải lên tối đa 5 ảnh. Vui lòng xóa bớt ảnh hiện có.');
+      toast.warning('Chỉ được phép tải lên tối đa 5 ảnh');
       return;
     }
     
-    // Cập nhật state và UI
-    const newImages = [...images, ...uploadedImages];
-    setImages(newImages);
-    
-    // Format lại mảng ảnh
-    const formattedImages = newImages.map(img => ({
-      image_url: img.url || img.image_url,
-      is_primary: img.is_primary || false
-    }));
-    
-    // Đảm bảo có một ảnh chính
-    if (!formattedImages.some(img => img.is_primary) && formattedImages.length > 0) {
-      formattedImages[0].is_primary = true;
+    try {
+      console.log('Uploaded images:', uploadedImages);
+      
+      // Chuẩn hóa uploadedImages để đảm bảo định dạng nhất quán
+      const normalizedUploadedImages = uploadedImages.map(img => ({
+        ...img,
+        url: img.url || img.image_url,
+        image_url: img.url || img.image_url,
+        is_primary: img.is_primary || false
+      }));
+      
+      // Cập nhật state và UI trước để người dùng thấy ngay
+      const newImages = [...images, ...normalizedUploadedImages];
+      setImages(newImages);
+      
+      // Tạo một mảng mới với định dạng chuẩn cho formData
+      const formattedImages = newImages.map(img => ({
+        image_url: img.url || img.image_url,
+        is_primary: img.is_primary || false
+      }));
+      
+      // Đảm bảo có một ảnh chính
+      if (!formattedImages.some(img => img.is_primary) && formattedImages.length > 0) {
+        formattedImages[0].is_primary = true;
+      }
+      
+      // Cập nhật formData
+      setFormData(prevData => ({
+        ...prevData,
+        images: formattedImages
+      }));
+    } catch (error) {
+      console.error('Error handling images:', error);
+      toast.error('Lỗi khi xử lý hình ảnh');
     }
-    
-    // Cập nhật formData
-    setFormData({
-      ...formData,
-      images: formattedImages
-    });
   };
   
   const handleRemoveImage = (index) => {
@@ -87,14 +135,16 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
     });
   };
   
+  // Cập nhật hàm setImageAsPrimary
   const setImageAsPrimary = (index) => {
+    // Cập nhật trạng thái is_primary của tất cả ảnh
     const newImages = images.map((img, i) => ({
       ...img,
       is_primary: i === index
     }));
     setImages(newImages);
     
-    // Cập nhật formData
+    // Cập nhật formData với định dạng chuẩn
     setFormData({
       ...formData,
       images: newImages.map(img => ({
@@ -120,11 +170,21 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
     return Object.keys(newErrors).length === 0;
   };
   
+  // Cập nhật hàm handleSubmit để đảm bảo không sử dụng image_url đơn lẻ
   const handleSubmit = (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit(formData);
+      // Tạo bản sao của formData để tránh thay đổi state trực tiếp
+      const finalData = {...formData};
+      
+      // Loại bỏ trường image_url nếu có, để đảm bảo chỉ sử dụng mảng images
+      if (finalData.hasOwnProperty('image_url')) {
+        delete finalData.image_url;
+      }
+      
+      console.log("Submitting form with images:", finalData.images);
+      onSubmit(finalData);
     }
   };
   
@@ -183,10 +243,11 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
               onChange={handleChange}
               error={errors.pet_type}
               required
+              placeholder="-- Chọn loại thú cưng --"
               options={[
+                { value: 'all', label: 'Tất cả loại' },
                 { value: 'dog', label: 'Chó' },
                 { value: 'cat', label: 'Mèo' },
-                { value: 'all', label: 'Tất cả' }
               ]}
             />
             
@@ -201,7 +262,7 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
                 { value: 'small', label: 'Nhỏ (dưới 10kg)' },
                 { value: 'medium', label: 'Vừa (10-25kg)' },
                 { value: 'large', label: 'Lớn (trên 25kg)' },
-                { value: 'all', label: 'Tất cả' }
+              
               ]}
             />
           </div>
@@ -243,15 +304,19 @@ const SpaServiceForm = ({ initialData, onSubmit, submitButtonText }) => {
           />
           
           <div className="image-previews">
-            {images.map((img, index) => (
-              <ImagePreview
-                key={index}
-                src={img.url || img.image_url}
-                isPrimary={img.is_primary}
-                onRemove={() => handleRemoveImage(index)}
-                onSetPrimary={() => setImageAsPrimary(index)}
-              />
-            ))}
+            {images.length > 0 ? (
+              images.map((img, index) => (
+                <ImagePreview
+                  key={index}
+                  src={img.url || img.image_url}
+                  isPrimary={Boolean(img.is_primary)}
+                  onRemove={() => handleRemoveImage(index)}
+                  onSetPrimary={() => setImageAsPrimary(index)}
+                />
+              ))
+            ) : (
+              <p className="no-images-message">Chưa có hình ảnh nào.</p>
+            )}
           </div>
         </div>
       </div>

@@ -1,44 +1,25 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = 'http://localhost:5000/api/spa-services';
+// Chuẩn hóa API URL - Bỏ tiền tố /api
+const API_URL = '/spa-services'; // Đã sửa - không cần /api/ ở đầu nữa
 
 // Lấy danh sách dịch vụ spa với phân trang và lọc
 export const fetchSpaServices = async (params = {}) => {
   try {
-    const { 
-      page = 1, 
-      pageSize = 10, 
-      searchTerm = '',
-      pet_type = '',
-      is_active,
-      is_featured,
-      sort_by = 'id',
-      sort_order = 'desc'
-    } = params;
-
-    let url = `${API_URL}?page=${page}&limit=${pageSize}`;
-    
-    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
-    if (pet_type) url += `&pet_type=${pet_type}`;
-    
-    if (is_active === true) url += `&is_active=true`;
-    else if (is_active === false) url += `&is_active=false`;
-    
-    if (is_featured === true) url += `&is_featured=true`;
-    else if (is_featured === false) url += `&is_featured=false`;
-    
-    if (sort_by) url += `&sort_by=${sort_by}`;
-    if (sort_order) url += `&sort_order=${sort_order}`;
-    
-    const response = await axios.get(url);
-    
-    return {
-      data: response.data.data || [],
-      total: response.data.pagination?.total || 0,
-      page: response.data.pagination?.page || 1,
-      limit: response.data.pagination?.limit || pageSize,
-      totalPages: response.data.pagination?.totalPages || 1
+    // Đảm bảo các tham số đúng với API endpoint
+    const apiParams = {
+      page: params.page || 1,
+      limit: params.pageSize || 10,
+      search: params.searchTerm || '',
+      pet_type: params.pet_type || '',
+      is_active: params.is_active,
+      is_featured: params.is_featured,
+      sort_by: params.sort_by || 'id',
+      sort_order: params.sort_order || 'DESC'
     };
+    
+    const response = await api.get(API_URL, { params: apiParams });
+    return response.data;
   } catch (error) {
     console.error('Error fetching spa services:', error);
     throw error;
@@ -46,23 +27,20 @@ export const fetchSpaServices = async (params = {}) => {
 };
 
 // Lấy chi tiết dịch vụ spa theo ID
-export const fetchSpaServiceById = (id) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const service = mockSpaServices.find(s => s.id === id);
-      if (service) {
-        resolve({...service});
-      } else {
-        reject(new Error('Không tìm thấy dịch vụ với ID ' + id));
-      }
-    }, 500);
-  });
+export const fetchSpaServiceById = async (id) => {
+  try {
+    const response = await api.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching spa service with id ${id}:`, error);
+    throw error;
+  }
 };
 
 // Tạo dịch vụ spa mới
 export const createSpaService = async (serviceData) => {
   try {
-    const response = await axios.post(API_URL, serviceData);
+    const response = await api.post(API_URL, serviceData);
     return response.data;
   } catch (error) {
     console.error('Error creating spa service:', error);
@@ -73,7 +51,7 @@ export const createSpaService = async (serviceData) => {
 // Cập nhật dịch vụ spa
 export const updateSpaService = async (id, serviceData) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, serviceData);
+    const response = await api.put(`${API_URL}/${id}`, serviceData);
     return response.data;
   } catch (error) {
     console.error('Error updating spa service:', error);
@@ -84,7 +62,7 @@ export const updateSpaService = async (id, serviceData) => {
 // Xóa dịch vụ spa
 export const deleteSpaService = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/${id}`);
+    const response = await api.delete(`${API_URL}/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error deleting spa service:', error);

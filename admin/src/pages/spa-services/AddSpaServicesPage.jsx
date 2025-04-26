@@ -14,17 +14,44 @@ const AddSpaServicePage = () => {
     description: '',
     price: '',
     duration: '',
-    pet_type: 'all',
-    pet_size: 'all',
+    pet_type: '', // Thay đổi từ 'all' thành '' để hiển thị placeholder
+    pet_size: '', // Thay đổi từ 'all' thành '' để hiển thị placeholder
     is_active: true,
     is_featured: false,
     images: []
   };
   
+  // Cập nhật handleSubmit
   const handleSubmit = async (serviceData) => {
     setLoading(true);
+    
     try {
-      await createSpaService(serviceData);
+      // Tạo bản sao để tránh thay đổi trực tiếp state
+      const normalizedData = {...serviceData};
+      
+      // Xử lý các trường số
+      normalizedData.price = parseFloat(normalizedData.price);
+      normalizedData.duration = parseInt(normalizedData.duration);
+      
+      // Xử lý các trường boolean
+      normalizedData.is_active = Boolean(normalizedData.is_active);
+      normalizedData.is_featured = Boolean(normalizedData.is_featured);
+      
+      // Chuẩn hóa mảng ảnh
+      if (normalizedData.images && normalizedData.images.length > 0) {
+        normalizedData.images = normalizedData.images.map(img => ({
+          image_url: img.image_url || img.url,
+          is_primary: !!img.is_primary
+        }));
+        
+        // Đảm bảo có một ảnh chính
+        if (!normalizedData.images.some(img => img.is_primary)) {
+          normalizedData.images[0].is_primary = true;
+        }
+      }
+      
+      console.log("Form data being submitted:", normalizedData);
+      const response = await createSpaService(normalizedData);
       toast.success('Thêm dịch vụ spa thành công');
       navigate('/spa-services');
     } catch (err) {

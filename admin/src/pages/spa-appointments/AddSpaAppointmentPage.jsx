@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { mockSpaServices } from '../../services/spaService';
+import { fetchSpaServices } from '../../services/spaService'; // Thay thế hàm lấy dịch vụ
+import { createAppointment, fetchTimeSlotAvailability } from '../../services/spaAppointmentService'; // Import tất cả từ cùng file
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import './AddSpaAppointment.css';
 
 const AddSpaAppointmentPage = () => {
   const navigate = useNavigate();
   const [availableServices, setAvailableServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState({});
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
@@ -24,13 +30,22 @@ const AddSpaAppointmentPage = () => {
     selected_services: []
   });
   
-  // Tải danh sách dịch vụ có sẵn
+  // Tải danh sách dịch vụ spa từ API
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setAvailableServices(mockSpaServices);
-      setLoading(false);
-    }, 500);
+    const loadServices = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchSpaServices({ is_active: true });
+        setAvailableServices(result.data || []);
+      } catch (error) {
+        console.error('Error loading spa services:', error);
+        toast.error('Không thể tải danh sách dịch vụ');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadServices();
   }, []);
   
   const handleChange = (e) => {
@@ -68,6 +83,23 @@ const AddSpaAppointmentPage = () => {
     }, 0);
   };
   
+  const checkAvailability = async (date) => {
+    if (!date) return;
+    
+    setIsCheckingAvailability(true);
+    try {
+      const formattedDate = date.toISOString().split('T')[0];
+      const result = await fetchTimeSlotAvailability(formattedDate);
+      setAvailableSlots(result.data || {});
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      toast.error('Không thể kiểm tra khả dụng khung giờ');
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+  
+  // Cập nhật hàm submit để sử dụng API
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.selected_services.length === 0) {
@@ -76,17 +108,69 @@ const AddSpaAppointmentPage = () => {
     }
     
     try {
-      setLoading(true);
-      // Mô phỏng gọi API
-      await new Promise(resolve => setTimeout(resolve, 800));
+      setSubmitting(true);
+      
+      // Đơn giản hóa: chỉ thêm seconds vào time nếu cần
+      let formattedTime = formData.appointment_time;
+      
+      // Đảm bảo định dạng HH:MM:SS
+      if (formattedTime && !formattedTime.endsWith(':00')) {
+        formattedTime = formattedTime.includes(':') && formattedTime.split(':').length === 2 
+          ? `${formattedTime}:00` 
+          : formattedTime;
+      }
+      
+      console.log('Giờ đã chọn để gửi API:', formattedTime);
+      
+      // Đảm bảo định dạng ngày là YYYY-MM-DD
+      let formattedDate = formData.appointment_date;
+      if (formattedDate) {
+        if (formattedDate instanceof Date) {
+          formattedDate = formattedDate.toISOString().split('T')[0];
+        } else if (typeof formattedDate === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+          const dateObj = new Date(formattedDate);
+          if (!isNaN(dateObj.getTime())) {
+            formattedDate = dateObj.toISOString().split('T')[0];
+          }
+        }
+      }
+      
+      // Chuẩn bị dữ liệu lịch hẹn
+      const appointmentData = {
+        appointmentData: {
+          full_name: formData.full_name,
+          phone_number: formData.phone_number,
+          email: formData.email || null,
+          pet_name: formData.pet_name,
+          pet_type: formData.pet_type,
+          pet_breed: formData.pet_breed || null,
+          pet_size: formData.pet_size,
+          pet_notes: formData.pet_notes || null,
+          appointment_date: formattedDate, // Sử dụng ngày đã định dạng nhất quán
+          appointment_time: formattedTime, // Sử dụng giờ đã định dạng nhất quán
+          status: formData.status,
+          payment_status: formData.payment_status,
+          total_amount: calculateTotal()
+        },
+        services: formData.selected_services.map(serviceId => {
+          const service = availableServices.find(s => s.id === serviceId);
+          return {
+            service_id: serviceId,
+            price: service.price
+          };
+        })
+      };
+      
+      // Gọi API tạo lịch hẹn
+      await createAppointment(appointmentData);
       
       toast.success("Tạo lịch hẹn spa thành công");
       navigate("/spa-appointments");
     } catch (error) {
       console.error("Error creating appointment:", error);
-      toast.error("Lỗi khi tạo lịch hẹn");
+      toast.error(error.response?.data?.message || "Lỗi khi tạo lịch hẹn");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
   
@@ -200,33 +284,62 @@ const AddSpaAppointmentPage = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Ngày hẹn <span className="required">*</span></label>
-              <input 
-                type="date"
-                name="appointment_date"
-                value={formData.appointment_date}
-                onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
+              <DatePicker
+                selected={formData.appointment_date ? new Date(formData.appointment_date) : null}
+                onChange={(date) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    appointment_date: date ? date.toISOString().split('T')[0] : '',
+                    appointment_time: '' // Reset giờ khi thay đổi ngày
+                  }));
+                  if (date) checkAvailability(date);
+                }}
+                dateFormat="dd/MM/yyyy"
+                locale="vi"
+                minDate={new Date()}
+                placeholderText="dd/mm/yyyy"
+                className="form-control"
                 required
               />
             </div>
             
             <div className="form-group">
               <label>Giờ hẹn <span className="required">*</span></label>
-              <select
-                name="appointment_time"
-                value={formData.appointment_time}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Chọn giờ</option>
-                <option value="09:00:00">09:00</option>
-                <option value="10:00:00">10:00</option>
-                <option value="11:00:00">11:00</option>
-                <option value="14:00:00">14:00</option>
-                <option value="15:00:00">15:00</option>
-                <option value="16:00:00">16:00</option>
-                <option value="17:00:00">17:00</option>
-              </select>
+              {isCheckingAvailability ? (
+                <div className="loading-slots">Đang kiểm tra khung giờ khả dụng...</div>
+              ) : (
+                <div className="time-slots">
+                  {Object.keys(availableSlots).length > 0 ? (
+                    Object.entries(availableSlots).map(([time, slotInfo]) => {
+                      // Format time từ "09:45" thành "09:45:00" để so sánh
+                      const fullTimeFormat = time.includes(':00') ? time : `${time}:00`;
+                      const available = slotInfo.available > 0;
+                      
+                      return (
+                        <div className="time-slot-container" key={time}>
+                          <button
+                            type="button"
+                            className={`time-slot-btn ${formData.appointment_time === fullTimeFormat ? 'selected' : ''} ${!available ? 'disabled' : ''}`}
+                            onClick={() => {
+                              if (available) {
+                                console.log('Chọn giờ:', fullTimeFormat);
+                                setFormData(prev => ({ ...prev, appointment_time: fullTimeFormat }));
+                              }
+                            }}
+                            disabled={!available}
+                          >
+                            {time}
+                            {available && <span className="available-tag">{slotInfo.available} chỗ</span>}
+                          </button>
+                          {!available && <span className="full-tag">Đã đầy</span>}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="no-slots-message">Không có khung giờ cho ngày này</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -308,9 +421,9 @@ const AddSpaAppointmentPage = () => {
           <button 
             type="submit" 
             className="btn-save"
-            disabled={loading || formData.selected_services.length === 0}
+            disabled={loading || submitting || formData.selected_services.length === 0}
           >
-            {loading ? 'Đang xử lý...' : 'Tạo lịch hẹn'}
+            {submitting ? 'Đang xử lý...' : 'Tạo lịch hẹn'}
           </button>
         </div>
       </form>

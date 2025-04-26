@@ -1,0 +1,118 @@
+.payment-modal {
+  padding: 10px 0;
+}
+
+.appointment-summary {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.appointment-summary h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #495057;
+}
+
+.appointment-summary p {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.appointment-summary .total-amount {
+  font-size: 16px;
+  color: #0070c9;
+}
+
+.payment-form .form-group {
+  margin-bottom: 20px;
+}
+
+.payment-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.payment-method {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-method:hover {
+  background-color: #e9ecef;
+}
+
+.payment-method.selected {
+  border-color: #0070c9;
+  background-color: #e3f2fd;
+}
+
+.payment-method input[type="radio"] {
+  display: none;
+}
+
+.payment-method i {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.payment-method.selected i {
+  color: #0070c9;
+}
+
+.payment-method img {
+  height: 30px;
+  margin-bottom: 8px;
+  object-fit: contain;
+}
+
+.payment-form input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.payment-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+}

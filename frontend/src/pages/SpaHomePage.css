@@ -151,6 +151,20 @@
     line-height: 1.6;
   }
   
+  /* Featured Services Section */
+  .featured-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Thay đổi từ cố định 3 cột */
+    gap: 25px;
+    margin-top: 30px;
+  }
+  
+  @media (max-width: 768px) {
+    .featured-services-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+  }
+  
   /* CTA Section */
   .spa-cta-section {
     background-color: var(--primary-color);
