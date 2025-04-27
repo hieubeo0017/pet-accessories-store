@@ -32,6 +32,10 @@ const brandRoutes = require('./routes/brandRoutes');
 const productRoutes = require('./routes/productRoutes');
 const petRoutes = require('./routes/petRoutes');
 const emailRoutes = require('./routes/emailRoutes'); // Add this line
+const authRoutes = require('./routes/authRoutes'); // Add this line
+const blogRoutes = require('./routes/blogRoutes'); // Add this line
+const userRoutes = require('./routes/userRouters'); // Add this line
+const reviewRoutes = require('./routes/reviewRouters'); // Add this line
 
 // Kết nối database
 connectDB()
@@ -46,6 +50,10 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/email', emailRoutes); // Add this line
+app.use('/api/auth', authRoutes)
+app.use('/api/blogs', blogRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Basic test route
 app.get('/', (req, res) => {
@@ -57,13 +65,13 @@ app.get('/api/test-db', async (req, res) => {
   try {
     const pool = await connectDB();
     const result = await pool.request().query('SELECT 1 as testValue');
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Kết nối database thành công!',
       data: result.recordset[0]
     });
   } catch (err) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Kết nối database thất bại!',
       error: err.message
