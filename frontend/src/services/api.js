@@ -399,51 +399,39 @@ export const fetchBreeds = async (type = '') => {
 // Hàm tìm kiếm lịch hẹn
 export const searchAppointments = async (searchData) => {
   try {
-    // Sử dụng api instance đã được cấu hình với baseURL đúng
-    const response = await api.get('/spa-appointments/search', { 
-      params: searchData 
-    });
+    const response = await api.get('/spa-appointments/search', { params: searchData });
     
-    // Xử lý dữ liệu trả về đúng cách
+    // Thêm logic xử lý dữ liệu
     if (response.data.success && Array.isArray(response.data.data)) {
       const formattedData = response.data.data.map(appointment => {
-        // Chỉ cho phép hủy khi trạng thái là pending (chờ xác nhận)
-        const canCancel = ['pending'].includes(appointment.status);
+        // Chỉ cho phép hủy khi trạng thái là pending (chờ xác nhận) và chưa thanh toán
+        const canCancel = appointment.status === 'pending' && appointment.payment_status !== 'paid';
         
         // Cho phép đổi lịch khi trạng thái là pending HOẶC confirmed
         const canReschedule = ['pending', 'confirmed'].includes(appointment.status);
         
+        // Cho phép đánh giá khi đã hoàn thành và đã thanh toán
         const canReview = appointment.status === 'completed' && appointment.payment_status === 'paid';
         
-        // Chuẩn hóa dịch vụ nếu cần
-        const services = Array.isArray(appointment.services) 
-          ? appointment.services.map(service => ({
-              id: service.id || service.service_id,
-              service_id: service.service_id,
-              name: service.name || service.service_name,
-              price: service.price
-            }))
-          : [];
-        
+        // Thêm các trường này vào đối tượng trả về
         return {
           ...appointment,
-          appointment_id: appointment.id,
-          services,
           can_cancel: canCancel,
           can_reschedule: canReschedule,
           can_review: canReview
         };
       });
       
+      // Trả về dữ liệu đã xử lý
       return {
-        success: true,
+        success: response.data.success,
         data: formattedData
       };
     }
     
     return response.data;
   } catch (error) {
-    console.error('Search API error:', error);
+    console.error('Error searching appointments:', error);
     throw error;
   }
 };
@@ -463,6 +451,11 @@ export const fetchSpaTimeSlotAvailability = async (date) => {
 // Tạo thanh toán mới cho lịch hẹn
 export const createSpaPayment = async (appointmentId, paymentData) => {
   try {
+    // Đảm bảo luôn có trường payment_method
+    if (!paymentData.payment_method) {
+      paymentData.payment_method = 'cash'; // Giá trị mặc định
+    }
+    
     const response = await api.post(`/payments/appointments/${appointmentId}/payments`, paymentData);
     return response.data;
   } catch (error) {
@@ -523,6 +516,20 @@ export const confirmVnpayPayment = async (queryParams) => {
     return response.data;
   } catch (error) {
     console.error('Error confirming VNPay payment:', error);
+    throw error;
+  }
+};
+
+// Đổi phương thức thanh toán cho lịch hẹn
+export const changePaymentMethod = async (appointmentId, newPaymentMethod, transactionId = null) => {
+  try {
+    const response = await api.put(`/payments/appointments/${appointmentId}/payment-method`, {
+      new_payment_method: newPaymentMethod,
+      transaction_id: transactionId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error changing payment method:', error);
     throw error;
   }
 };

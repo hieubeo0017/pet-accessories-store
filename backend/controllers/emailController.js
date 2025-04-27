@@ -1,6 +1,16 @@
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const axios = require('axios');
 
+// Thêm hàm này ở đầu file hoặc gần phần xử lý email
+const getPaymentMethodText = (method) => {
+  switch(method) {
+    case 'cash': return 'Tiền mặt (thanh toán tại cửa hàng)';
+    case 'vnpay': 
+    case 'e-wallet': return 'VNPAY';
+    default: return 'Chưa xác định';
+  }
+};
+
 // Ghi log phiên bản SDK
 let sdkVersion;
 try {
@@ -173,8 +183,8 @@ const emailController = {
     }
   },
 
-  // Gửi email xác nhận đặt lịch
-  sendBookingConfirmationEmail: async (to, subject, htmlContent) => {
+  // Cập nhật hàm sendBookingConfirmationEmail
+  sendBookingConfirmationEmail: async (to, subject, htmlContent, appointment) => {
     try {
       const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
       const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
@@ -182,7 +192,23 @@ const emailController = {
       // Setup email data
       sendSmtpEmail.to = [{ email: to }];
       sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = htmlContent;
+      
+      // Xử lý payment_method trước khi hiển thị - chuyển e-wallet thành vnpay
+      // giống như trong spaAppointmentController
+      let displayAppointment = { ...appointment };
+      if (displayAppointment && displayAppointment.payment_method === 'e-wallet') {
+        displayAppointment.payment_method = 'vnpay';
+      }
+      
+      // Lấy text hiển thị cho phương thức thanh toán
+      const paymentMethodText = displayAppointment && displayAppointment.payment_method 
+        ? getPaymentMethodText(displayAppointment.payment_method) 
+        : 'Chưa xác định';
+        
+      sendSmtpEmail.htmlContent = `
+        ${htmlContent}
+      
+      `;
       
       // Cấu hình sender
       sendSmtpEmail.sender = {

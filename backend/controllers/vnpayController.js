@@ -1,6 +1,10 @@
+const { sql, connectDB } = require('../config/database');
 const vnpayService = require('../services/vnpayService');
 const spaAppointmentModel = require('../models/spaAppointmentModel');
 const spaPaymentModel = require('../models/spaPaymentModel');
+const spaServiceModel = require('../models/spaServiceModel');
+const emailController = require('../controllers/emailController');
+const { generateBookingConfirmationEmail } = require('../controllers/spaAppointmentController');
 const moment = require('moment');
 
 const formatIpAddress = (ipAddr) => {
@@ -65,7 +69,7 @@ const vnpayController = {
     }
   },
 
-  // Xử lý callback từ VNPay
+  // Sửa hàm handleCallback trong vnpayController.js
   handleCallback: async (req, res) => {
     try {
       const vnpParams = req.query;
@@ -102,16 +106,12 @@ const vnpayController = {
       const appointmentIdMatch = vnp_OrderInfo.match(/THANHTOAN(APT\d+)/i);
       let appointmentId;
       if (!appointmentIdMatch || appointmentIdMatch.length < 2) {
-        // Trích xuất trực tiếp từ orderInfo không cần regex
         const directMatch = vnp_OrderInfo.replace('THANHTOAN', '');
         
-        // Kiểm tra nếu directMatch bắt đầu bằng APT
         if (directMatch.startsWith('APT')) {
           appointmentId = directMatch.replace(/^(APT)(\d+)$/i, 'APT-$2');
         } else {
-          // Trường hợp khẩn cấp: Lấy từ vnp_TxnRef
           console.log("Không thể trích xuất appointment_id, sử dụng txnRef:", vnp_TxnRef);
-          
           return res.status(400).json({
             success: false,
             message: 'Không thể xác định lịch hẹn từ thông tin đơn hàng',
@@ -119,7 +119,6 @@ const vnpayController = {
           });
         }
       } else {
-        // Thêm dòng này để đảm bảo định dạng đúng APT-XXXX
         appointmentId = appointmentIdMatch[1].replace(/^(APT)(\d+)$/i, 'APT-$2');
       }
 
@@ -133,14 +132,15 @@ const vnpayController = {
       }
 
       // Kiểm tra giao dịch đã tồn tại chưa
-      const existingPayment = await spaPaymentModel.findByTransactionId(vnp_TransactionNo);
-      if (existingPayment) {
-        console.log(`Giao dịch với mã ${vnp_TransactionNo} đã được xử lý trước đó. Bỏ qua.`);
+      const existingTransactionPayment = await spaPaymentModel.findByTransactionId(vnp_TransactionNo);
+      if (existingTransactionPayment) {
+       
         return res.status(200).json({
           success: true,
           message: 'Giao dịch đã được xử lý trước đó',
           data: {
             appointment_id: appointmentId,
+            payment_id: existingTransactionPayment.id,
             amount: vnp_Amount,
             transaction_id: vnp_TransactionNo,
             bank_code: vnp_BankCode
@@ -148,65 +148,106 @@ const vnpayController = {
         });
       }
 
-      // Kiểm tra tổng số tiền đã thanh toán cho lịch hẹn
-      const allPayments = await spaPaymentModel.getByAppointmentId(appointmentId);
-      const totalPaid = allPayments.reduce((sum, payment) => 
-        sum + parseFloat(payment.amount), 0);
-
-      // Nếu đã thanh toán đủ hoặc thanh toán vượt quá, không tạo thanh toán mới
-      if (totalPaid >= appointment.total_amount) {
-        return res.status(200).json({
-          success: true,
-          message: 'Lịch hẹn này đã được thanh toán đủ trước đó',
-          data: { appointment_id: appointmentId, total_paid: totalPaid }
-        });
-      }
-
-      // Trước khi tạo thanh toán mới, kiểm tra xem appointment đã có thanh toán chưa
-      const existingPayments = await spaPaymentModel.findByAppointmentIdAndStatus(appointmentId);
-      if (existingPayments.length > 0) {
-        console.log(`Appointment ${appointmentId} đã có thanh toán trước đó. Kiểm tra và cập nhật nếu cần.`);
-        // Có thể thêm logic cập nhật payment_status nếu cần
-        return res.status(200).json({
-          success: true,
-          message: 'Lịch hẹn này đã được thanh toán trước đó',
-          data: {
-            appointment_id: appointmentId,
-            existing_payments: existingPayments
-          }
-        });
-      }
-
       // Nếu thanh toán thành công
       if (vnp_ResponseCode === '00') {
         try {
-          console.log("Bắt đầu lưu thanh toán VNPay vào database");
-          // Tạo thanh toán mới
-          const paymentResult = await spaPaymentModel.create({
-            appointment_id: appointmentId,
-            amount: vnp_Amount,
-            payment_method: 'e-wallet',
-            transaction_id: vnp_TransactionNo,
-            payment_date: moment(vnp_PayDate, 'YYYYMMDDHHmmss').toDate(),
-            status: 'completed',
-            notes: `Thanh toán qua VNPay - Ngân hàng: ${vnp_BankCode}`,
-            update_appointment_status: vnp_Amount >= appointment.total_amount
-          });
+          console.log("Thanh toán VNPAY thành công, xử lý giao dịch...");
           
-          console.log("Kết quả lưu thanh toán:", paymentResult);
+          // Tìm bản ghi thanh toán e-wallet gần nhất (có thể chưa có transaction_id)
+          const latestEwalletPayment = await spaPaymentModel.findLatestByAppointmentId(appointmentId);
           
-          // Cập nhật thêm trạng thái lịch hẹn nếu cần
+          let paymentResult;
+          
+          // Nếu đã có bản ghi thanh toán e-wallet và chưa có transaction_id
+          if (latestEwalletPayment && 
+              latestEwalletPayment.payment_method === 'e-wallet' && 
+              (!latestEwalletPayment.transaction_id || latestEwalletPayment.transaction_id === 'undefined')) {
+            
+           
+            
+            // Cập nhật transaction_id cho bản ghi hiện có
+            const updateResult = await spaPaymentModel.updateTransactionId(
+              latestEwalletPayment.id, 
+              vnp_TransactionNo
+            );
+            
+            if (updateResult.success) {
+             
+              paymentResult = { 
+                success: true, 
+                id: latestEwalletPayment.id 
+              };
+            } else {
+              
+            }
+          } else {
+          
+            
+            // Tạo bản ghi thanh toán mới
+            paymentResult = await spaPaymentModel.create({
+              appointment_id: appointmentId,
+              amount: vnp_Amount,
+              payment_method: 'e-wallet',
+              transaction_id: vnp_TransactionNo, // Quan trọng: Lưu transaction_id ngay khi tạo
+              payment_date: moment(vnp_PayDate, 'YYYYMMDDHHmmss').toDate(),
+              status: 'completed',
+              notes: `Thanh toán qua VNPay - Ngân hàng: ${vnp_BankCode}`,
+              update_appointment_status: vnp_Amount >= appointment.total_amount
+            });
+          }
+          
+          // Cập nhật trạng thái thanh toán cho lịch hẹn
           if (vnp_Amount >= appointment.total_amount) {
             await spaAppointmentModel.updatePaymentStatus(appointmentId, 'paid');
             console.log(`Đã cập nhật trạng thái thanh toán của lịch hẹn ${appointmentId} thành paid`);
           }
 
-          // Trả về thông tin thanh toán thành công
+          // Đảm bảo cập nhật trạng thái lịch hẹn thành "confirmed"
+          await spaAppointmentModel.updateStatus(appointmentId, 'confirmed');
+          console.log(`Đã cập nhật trạng thái lịch hẹn ${appointmentId} thành 'confirmed' sau khi thanh toán VNPAY thành công`);
+
+          // Sau khi thanh toán thành công, gửi email xác nhận
+          try {
+            // Lấy thông tin đầy đủ của lịch hẹn
+            const updatedAppointment = await spaAppointmentModel.getById(appointmentId);
+            
+            // Lấy thông tin chi tiết về dịch vụ đã đặt
+            const serviceDetails = await spaServiceModel.getServicesByAppointmentId(appointmentId);
+            
+            // Cập nhật payment_method thành 'vnpay' để email hiển thị đúng
+            updatedAppointment.payment_method = 'vnpay';
+            
+            // Tạo nội dung email
+            const emailSubject = `Xác nhận đặt lịch và thanh toán spa thú cưng - ${updatedAppointment.id}`;
+            const emailContent = generateBookingConfirmationEmail(
+              updatedAppointment, 
+              serviceDetails, 
+              updatedAppointment.full_name
+            );
+            
+            // Gửi email
+            if (updatedAppointment.email) {
+              await emailController.sendBookingConfirmationEmail(
+                updatedAppointment.email,
+                emailSubject,
+                emailContent,
+                updatedAppointment
+              );
+              
+              console.log('Đã gửi email xác nhận sau khi thanh toán VNPAY thành công đến:', updatedAppointment.email);
+            }
+          } catch (emailError) {
+            console.error('Lỗi khi gửi email xác nhận sau thanh toán VNPAY:', emailError);
+            // Không làm ảnh hưởng đến kết quả thanh toán
+          }
+
+          // Trả về kết quả
           return res.json({
             success: true,
             message: 'Thanh toán thành công',
             data: {
               appointment_id: appointmentId,
+              payment_id: paymentResult.id,
               amount: vnp_Amount,
               transaction_id: vnp_TransactionNo,
               bank_code: vnp_BankCode,
@@ -214,8 +255,7 @@ const vnpayController = {
             }
           });
         } catch (paymentError) {
-          console.error("Lỗi khi lưu thanh toán:", paymentError);
-          // Vẫn trả về thành công cho người dùng nhưng ghi log lỗi
+          console.error("Lỗi khi xử lý thanh toán:", paymentError);
           return res.json({
             success: true,
             message: 'Giao dịch thành công nhưng có lỗi khi lưu dữ liệu',

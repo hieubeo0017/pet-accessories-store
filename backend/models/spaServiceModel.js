@@ -481,11 +481,50 @@ const getFeaturedSpaServices = async (limit = 5) => {
   }
 };
 
+/**
+ * Lấy danh sách dịch vụ theo ID lịch hẹn
+ * @param {string} appointmentId - ID của lịch hẹn
+ * @returns {Array} - Danh sách dịch vụ liên kết với lịch hẹn
+ */
+const getServicesByAppointmentId = async (appointmentId) => {
+  try {
+    const pool = await connectDB();
+    
+    // Truy vấn lấy dịch vụ liên kết với lịch hẹn
+    const result = await pool.request()
+      .input('appointment_id', sql.VarChar(50), appointmentId)
+      .query(`
+        SELECT 
+          s.*,
+          ss.name,
+          ss.description,
+          ss.duration,
+          ss.pet_type,
+          ss.pet_size
+        FROM 
+          spa_appointment_services s
+          JOIN spa_services ss ON s.service_id = ss.id
+        WHERE 
+          s.appointment_id = @appointment_id
+      `);
+    
+    // Định dạng dịch vụ phù hợp với email template
+    return result.recordset.map(service => ({
+      name: service.name || 'Dịch vụ spa',
+      price: service.price
+    }));
+  } catch (error) {
+    console.error('Lỗi khi lấy dịch vụ theo ID lịch hẹn:', error);
+    return []; // Trả về mảng rỗng trong trường hợp lỗi
+  }
+};
+
 module.exports = {
   getAllSpaServices,
   getSpaServiceById,
   createSpaService,
   updateSpaService,
   deleteSpaService,
-  getFeaturedSpaServices
+  getFeaturedSpaServices,
+  getServicesByAppointmentId
 };

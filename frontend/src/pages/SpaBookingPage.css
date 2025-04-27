@@ -843,3 +843,145 @@
   background-color: #2b6cb0;
   /* Các thuộc tính hover khác */
 }
+
+/* Thêm phần CSS cho thanh toán vào cuối file */
+
+/* Phần Payment */
+.payment-section {
+  margin-top: 30px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.payment-method {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-method:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.payment-method.selected {
+  border-color: #0070c9;
+  background-color: #e3f2fd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payment-method input[type="radio"] {
+  display: none;
+}
+
+.payment-method i {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+.payment-method.selected i {
+  color: #0070c9;
+}
+
+.payment-method img {
+  margin-bottom: 10px;
+  object-fit: contain;
+}
+
+.payment-method span {
+  font-weight: 500;
+  text-align: center;
+  color: #495057;
+}
+
+.payment-method.selected span {
+  color: #0070c9;
+}
+
+/* Responsive styles for payment */
+@media (max-width: 768px) {
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Thêm style cho thông báo khi chưa chọn ngày */
+.date-required-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 15px;
+  color: #1976d2; /* Màu xanh thay vì màu đỏ */
+  background-color: #e3f2fd; /* Nền xanh nhạt */
+  border: 1px dashed #90caf9;
+  border-radius: 8px;
+  font-size: 15px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.date-required-message i {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+/* Thêm vào cuối file */
+
+/* Kiểu dáng cho container chứa input email và nút xác thực */
+.email-input-container {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.email-input-container input {
+  flex: 1;
+  padding-right: 90px; /* Để chừa chỗ cho nút xác thực */
+}
+
+.email-input-container .verify-email-btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 35px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 15px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.email-input-container .verify-email-btn:hover {
+  background-color: #1565c0;
+}
+
+/* Kiểu dáng cho phần hướng dẫn */
+.email-verify-guide {
+  font-size: 13px;
+  color: #757575;
+  margin-top: 8px;
+  padding-left: 2px;
+  font-style: italic;
+}

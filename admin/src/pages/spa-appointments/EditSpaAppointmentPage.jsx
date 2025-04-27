@@ -33,6 +33,7 @@ const EditSpaAppointmentPage = () => {
     pet_notes: '',
     status: 'pending',
     payment_status: 'pending',
+    payment_method: 'cash', // Thêm payment_method với giá trị mặc định
     selected_services: []
   });
 
@@ -64,6 +65,7 @@ const EditSpaAppointmentPage = () => {
           pet_notes: appointment.pet_notes || '',
           status: appointment.status,
           payment_status: appointment.payment_status,
+          payment_method: appointment.payment_method || 'cash', // Thêm vào đây
           selected_services: appointment.services.map(service => service.service_id)
         });
         
@@ -121,7 +123,10 @@ const EditSpaAppointmentPage = () => {
     
     setIsCheckingAvailability(true);
     try {
-      const formattedDate = date.toISOString().split('T')[0];
+      // Thay thế cách lấy ngày để tránh vấn đề múi giờ
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      console.log('Ngày đã được format để kiểm tra availability:', formattedDate);
       const result = await fetchTimeSlotAvailability(formattedDate);
       setAvailableSlots(result.data || {});
     } catch (error) {
@@ -214,6 +219,7 @@ const EditSpaAppointmentPage = () => {
         appointment_time: formattedTime,
         status: formData.status,
         payment_status: formData.payment_status,
+        payment_method: formData.payment_method, // Thêm vào đây
         total_amount: calculateTotal()
       };
       
@@ -360,7 +366,9 @@ const EditSpaAppointmentPage = () => {
                 onChange={(date) => {
                   setFormData(prev => ({
                     ...prev,
-                    appointment_date: date ? date.toISOString().split('T')[0] : '',
+                    appointment_date: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : 
+                      '',
                     appointment_time: '' // Reset giờ khi thay đổi ngày
                   }));
                   if (date) checkAvailability(date);
@@ -470,6 +478,19 @@ const EditSpaAppointmentPage = () => {
                 <option value="paid">Đã thanh toán</option>
               </select>
             </div>
+          </div>
+          
+          {/* Thêm phương thức thanh toán */}
+          <div className="form-group">
+            <label>Phương thức thanh toán</label>
+            <select
+              name="payment_method"
+              value={formData.payment_method || 'cash'}
+              onChange={handleChange}
+            >
+              <option value="cash">Tiền mặt</option>
+              <option value="vnpay">VNPAY</option>
+            </select>
           </div>
         </div>
         

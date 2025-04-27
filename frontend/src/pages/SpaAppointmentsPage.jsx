@@ -700,6 +700,9 @@ const SpaAppointmentsPage = () => {
                           {appointment.services.map(service => {
                             // Xác định icon phù hợp với loại dịch vụ
                             const getServiceIcon = (serviceName) => {
+                              // Kiểm tra xem serviceName có tồn tại không
+                              if (!serviceName) return 'fa-paw'; // Icon mặc định nếu không có tên dịch vụ
+                              
                               const name = serviceName.toLowerCase();
                               if (name.includes('tắm') || name.includes('vệ sinh')) return 'fa-shower';
                               if (name.includes('cắt') || name.includes('tỉa')) return 'fa-cut';
@@ -715,7 +718,7 @@ const SpaAppointmentsPage = () => {
                                 <div className="service-info">
                                   <span className="service-name">
                                     <i className={`fas ${getServiceIcon(service.name)}`}></i>
-                                    {service.name}
+                                    {service.name || 'Dịch vụ không xác định'}
                                   </span>
                                   <div className="service-details">
                                     {service.duration && (
@@ -756,8 +759,9 @@ const SpaAppointmentsPage = () => {
                       </button>
                     )}
                     
-                    {/* Chỉ hiển thị button hủy lịch khi có thể hủy và không ở trạng thái completed hoặc confirmed */}
-                    {appointment.can_cancel && appointment.status !== 'completed' && appointment.status !== 'confirmed' && (
+                    {/* Chỉ hiển thị button hủy lịch khi trạng thái là pending và chưa thanh toán HOẶC thanh toán tiền mặt */}
+                    {appointment.status === 'pending' && 
+                      (appointment.payment_status !== 'paid' || appointment.payment_method === 'cash') && (
                       <button className="btn-cancel" onClick={() => handleCancelClick(appointment.appointment_id)}>
                         Hủy lịch
                       </button>
@@ -770,10 +774,11 @@ const SpaAppointmentsPage = () => {
                       </button>
                     )}
 
-                    {/* Nút thanh toán */}
-                    {appointment.payment_status !== 'paid' && (
+                    {/* Nút thanh toán - hiển thị cho tất cả lịch hẹn chưa thanh toán đầy đủ */}
+                    {(appointment.payment_status !== 'paid' || appointment.payment_method === 'cash') && (
                       <button className="btn-payment" onClick={() => handlePaymentClick(appointment)}>
-                        <i className="fas fa-credit-card"></i> Thanh toán
+                        <i className="fas fa-credit-card"></i> 
+                        {appointment.payment_method === 'cash' ? 'Thanh toán online' : 'Thanh toán'}
                       </button>
                     )}
                     

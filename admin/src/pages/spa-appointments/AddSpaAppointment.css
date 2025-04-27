@@ -284,3 +284,24 @@
     width: 100%;
   }
 }
+
+.payment-method-icon {
+  margin-right: 8px;
+}
+
+.payment-method-cash .payment-method-icon {
+  color: #28a745;
+}
+
+.payment-method-vnpay .payment-method-icon,
+.payment-method-e-wallet .payment-method-icon {
+  color: #007bff;
+}
+
+.payment-method-credit_card .payment-method-icon {
+  color: #dc3545;
+}
+
+.payment-method-bank_transfer .payment-method-icon {
+  color: #6610f2;
+}

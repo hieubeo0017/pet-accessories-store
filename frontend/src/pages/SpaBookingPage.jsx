@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchSpaServices, createSpaAppointment, fetchBreeds, fetchSpaTimeSlotAvailability } from '../services/api';
+import { fetchSpaServices, createSpaAppointment, fetchBreeds, fetchSpaTimeSlotAvailability, createVnPayUrl, createSpaPayment } from '../services/api';
 import EmailAuth from '../components/auth/EmailAuth';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { vi } from 'date-fns/locale/vi';
@@ -25,7 +25,8 @@ const SpaBookingPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
-  
+  const totalSteps = 4;
+
   const [formData, setFormData] = useState({
     petName: '',
     petType: 'dog',
@@ -58,6 +59,12 @@ const SpaBookingPage = () => {
   // State cho khung giờ
   const [availableTimeSlots, setAvailableTimeSlots] = useState({});
   const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
+
+  // Thêm state cho phần thanh toán
+  const [paymentMethod, setPaymentMethod] = useState('vnpay'); // Mặc định là VNPay
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [appointmentCreated, setAppointmentCreated] = useState(null);
+  const [paymentNotes, setPaymentNotes] = useState('');
 
   useEffect(() => {
     const loadServices = async () => {
@@ -196,6 +203,25 @@ const SpaBookingPage = () => {
   };
 
   const nextStep = () => {
+    // Kiểm tra validation cho step 1
+    if (currentStep === 1) {
+      // Kiểm tra các trường bắt buộc
+      if (!formData.petName.trim()) {
+        toast.error('Vui lòng nhập tên thú cưng');
+        return;
+      }
+      
+      // Kiểm tra giống thú cưng
+      if (!formData.petBreed.trim()) {
+        toast.error('Vui lòng chọn hoặc nhập giống thú cưng');
+        return;
+      }
+      
+      // Các trường petType và petSize đã có giá trị mặc định nên không cần kiểm tra
+      // petNotes không bắt buộc nên cũng không cần kiểm tra
+    }
+    
+    // Nếu đã pass tất cả validation, chuyển sang bước tiếp theo
     setCurrentStep(prev => prev + 1);
     window.scrollTo(0, 0);
   };
@@ -211,17 +237,12 @@ const SpaBookingPage = () => {
     if (!emailVerified) {
       // Hiển thị form xác thực nếu chưa xác thực email
       if (!formData.email || !validateEmail(formData.email)) {
-        // Sử dụng alert thay thế hoặc kiểm tra toast
-        if (typeof toast !== 'undefined') {
-          toast.error('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
-        } else {
-          alert('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
-        }
+        toast.error('Vui lòng nhập địa chỉ email hợp lệ để xác thực');
         return;
       }
       setShowEmailAuth(true);
     } else {
-      // Nếu email đã xác thực, tiến hành đặt lịch
+      // Nếu email đã xác thực, tạo lịch hẹn và chuyển sang bước thanh toán
       handleSubmitBooking();
     }
   };
@@ -267,51 +288,51 @@ const SpaBookingPage = () => {
       if (formData.appointmentTime) {
         // Đảm bảo định dạng giờ đúng với chuẩn ISO
         formattedTime = formData.appointmentTime + ':00';
-        
-        // Thêm dòng kiểm tra giờ đã đúng định dạng chưa
-        console.log('Formatted time for API:', formattedTime);
       }
       
-      // Chuẩn bị dữ liệu - Bọc vào đối tượng appointmentData như backend mong đợi
-      const bookingData = {
-        appointmentData: {
-          full_name: formData.fullName,
-          phone_number: formData.phoneNumber,
-          email: formData.email,
-          pet_name: formData.petName,
-          pet_type: formData.petType,
-          pet_breed: formData.petBreed || '',
-          pet_size: formData.petSize,
-          pet_notes: formData.petNotes || '',
-          appointment_date: formattedDate,
-          appointment_time: formattedTime,
-          payment_status: 'pending',
-          status: 'pending',
-          total_amount: formData.selectedServices.reduce((total, serviceId) => {
-            const service = services.find(s => s.id === serviceId);
-            return total + (service ? parseInt(service.price) : 0);
-          }, 0)
-        },
+      // Tính tổng tiền
+      const totalAmount = formData.selectedServices.reduce((total, serviceId) => {
+        const service = services.find(s => s.id === serviceId);
+        return total + (service ? parseInt(service.price) : 0);
+      }, 0);
+      
+      // Chuẩn bị dữ liệu
+      const appointmentData = {
+        full_name: formData.fullName,
+        phone_number: formData.phoneNumber,
+        email: formData.email,
+        pet_name: formData.petName,
+        pet_type: formData.petType,
+        pet_breed: formData.petBreed || '',
+        pet_size: formData.petSize,
+        pet_notes: formData.petNotes || '',
+        appointment_date: formattedDate,
+        appointment_time: formattedTime,
+        payment_status: 'pending',
+        status: 'pending',
+        total_amount: totalAmount,
+        payment_method: paymentMethod // 'cash' hoặc 'vnpay'
+      };
+      
+      // Gọi API đặt lịch
+      const response = await createSpaAppointment({ 
+        appointmentData, 
         services: formData.selectedServices.map(serviceId => ({
           service_id: serviceId,
           price: services.find(s => s.id === serviceId)?.price || 0
         }))
-      };
+      });
       
-      console.log('Sending booking data:', bookingData);
-      
-      // Gọi API đặt lịch
-      const response = await createSpaAppointment(bookingData);
-      
-      toast.success('Đặt lịch thành công! Chúng tôi đã gửi email xác nhận cho bạn.');
-      
-      // Sửa dòng này - Truy xuất ID đúng cấu trúc
+      // Lưu thông tin lịch hẹn vừa tạo
       const appointmentId = response.data.data.id;
+      setAppointmentCreated({
+        id: appointmentId,
+        ...appointmentData
+      });
       
-      // Log để kiểm tra
-      console.log('Appointment created with ID:', appointmentId);
+      // Chuyển đến bước thanh toán
+      nextStep();
       
-      navigate(`/spa/booking/confirmation/${appointmentId}`);
     } catch (error) {
       console.error('Lỗi khi đặt lịch:', error);
       
@@ -322,6 +343,64 @@ const SpaBookingPage = () => {
         toast.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
       }
     }
+  };
+  
+  const handleProcessPayment = async () => {
+    if (!appointmentCreated) {
+      toast.error('Không tìm thấy thông tin lịch hẹn để thanh toán');
+      return;
+    }
+    
+    try {
+      setIsProcessingPayment(true);
+      
+      // Tính tổng tiền
+      const totalAmount = formData.selectedServices.reduce((total, serviceId) => {
+        const service = services.find(s => s.id === serviceId);
+        return total + (service ? parseInt(service.price) : 0);
+      }, 0);
+      
+      if (paymentMethod === 'vnpay') {
+        // Tạo URL thanh toán VNPay
+        const redirectUrl = `${window.location.origin}/payment/callback`;
+        const vnpayResponse = await createVnPayUrl(appointmentCreated.id, totalAmount, redirectUrl);
+        
+        if (vnpayResponse.success) {
+          // Chuyển hướng đến trang thanh toán VNPay
+          window.location.href = vnpayResponse.paymentUrl;
+          // Không set loading false vì đang rời khỏi trang
+        } else {
+          toast.error('Không thể tạo liên kết thanh toán');
+          setIsProcessingPayment(false);
+        }
+      } else if (paymentMethod === 'cash') {
+        // Thanh toán tiền mặt tại cửa hàng
+        const paymentResponse = await createSpaPayment(appointmentCreated.id, {
+          amount: totalAmount,
+          payment_method: 'cash',
+          status: 'pending',
+          notes: paymentNotes || 'Thanh toán tại cửa hàng'
+        });
+        
+        if (paymentResponse.success) {
+          toast.success('Đã ghi nhận thanh toán tại cửa hàng');
+          // Chuyển đến trang xác nhận
+          navigate(`/spa/booking/confirmation/${appointmentCreated.id}`);
+        } else {
+          toast.error('Không thể xử lý thanh toán');
+          setIsProcessingPayment(false);
+        }
+      }
+    } catch (error) {
+      console.error('Lỗi khi xử lý thanh toán:', error);
+      toast.error('Có lỗi xảy ra khi xử lý thanh toán');
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleSkipPayment = () => {
+    // Chuyển đến trang xác nhận mà không thanh toán
+    navigate(`/spa/booking/confirmation/${appointmentCreated.id}`);
   };
 
   return (
@@ -342,9 +421,15 @@ const SpaBookingPage = () => {
               <div className="step-number">3</div>
               <div className="step-name">Xác nhận</div>
             </div>
+            <div className={`step ${currentStep >= 4 ? 'active' : ''}`}>
+              <div className="step-number">4</div>
+              <div className="step-name">Thanh toán</div>
+            </div>
             
             <div className="step-progress-line" style={{
-              width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%'
+              width: currentStep === 1 ? '0%' : 
+                    currentStep === 2 ? '33%' : 
+                    currentStep === 3 ? '67%' : '100%'
             }}></div>
           </div>
         </div>
@@ -512,7 +597,11 @@ const SpaBookingPage = () => {
                       
                       <div className="form-group">
                         <label>Giờ</label>
-                        {isLoadingTimeSlots ? (
+                        {!formData.appointmentDate ? (
+                          <div className="date-required-message">
+                            <i className="fas fa-info-circle"></i> Vui lòng chọn ngày trước
+                          </div>
+                        ) : isLoadingTimeSlots ? (
                           <div className="loading-time-slots">
                             <div className="spinner-small"></div>
                             <p>Đang tải khung giờ trống...</p>
@@ -589,28 +678,63 @@ const SpaBookingPage = () => {
                 
                 <div className="form-group">
                   <label>Email <span className="verified-badge">{emailVerified ? '(Đã xác thực)' : ''}</span></label>
-                  <input 
-                    type="email" 
-                    name="email" 
-                    value={formData.email} 
-                    onChange={handleInputChange}
-                    disabled={emailVerified}
-                    required
-                  />
+                  <div className="email-input-container">
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleInputChange}
+                      disabled={emailVerified}
+                      required
+                      placeholder="Nhập địa chỉ email của bạn"
+                      style={{ paddingRight: '90px' }}
+                    />
+                    {!emailVerified && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          if (validateEmail(formData.email)) {
+                            setShowEmailAuth(true);
+                          } else {
+                            toast.error('Vui lòng nhập địa chỉ email hợp lệ');
+                          }
+                        }}
+                        disabled={!formData.email}
+                        style={{
+                          position: 'absolute',
+                          right: '5px',
+                          top: '40%',
+                          transform: 'translateY(-50%)',
+                          height: '35px',
+                          backgroundColor: formData.email ? '#1976d2' : '#e0e0e0',
+                          color: formData.email ? 'white' : '#909090',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '0 15px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: formData.email ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.3s ease',
+                          boxShadow: formData.email ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                        title={formData.email ? 'Nhấn để xác thực email' : 'Nhập email trước khi xác thực'}
+                      >
+                        Xác thực
+                      </button>
+                    )}
+                  </div>
                   {!emailVerified && (
-                    <button 
-                      type="button" 
-                      className="verify-email-btn"
-                      onClick={() => {
-                        if (validateEmail(formData.email)) {
-                          setShowEmailAuth(true);
-                        } else {
-                          alert('Vui lòng nhập địa chỉ email hợp lệ');
-                        }
-                      }}
-                    >
-                      Xác thực email
-                    </button>
+                    <div className="email-verify-guide" style={{ 
+                      fontSize: '13px', 
+                      color: '#757575', 
+                      marginTop: '8px', 
+                      paddingLeft: '2px', 
+                      fontStyle: 'italic' 
+                    }}>
+                      {formData.email 
+                        ? 'Nhấn nút "Xác thực" để tiếp tục đặt lịch' 
+                        : 'Nhập địa chỉ email để kích hoạt nút xác thực'}
+                    </div>
                   )}
                 </div>
               </div>
@@ -669,6 +793,121 @@ const SpaBookingPage = () => {
                   onClick={handleProceedToBooking}
                 >
                   {emailVerified ? 'Hoàn tất đặt lịch' : 'Xác thực và đặt lịch'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="booking-step">
+              <h2>Thanh toán</h2>
+              
+              <div className="payment-confirmation">
+                <div className="booking-summary">
+                  <h3>Thông tin lịch hẹn</h3>
+                  <div className="summary-item">
+                    <strong>Mã lịch hẹn:</strong> {appointmentCreated?.id}
+                  </div>
+                  <div className="summary-item">
+                    <strong>Thú cưng:</strong> {formData.petName} ({formData.petType === 'dog' ? 'Chó' : 'Mèo'})
+                  </div>
+                  <div className="summary-item">
+                    <strong>Thời gian:</strong> {
+                      formData.appointmentDate 
+                        ? new Date(formData.appointmentDate).toLocaleDateString('vi-VN', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })
+                        : ''
+                    } - {formData.appointmentTime}
+                  </div>
+                  <div className="summary-item">
+                    <strong>Dịch vụ đã chọn:</strong>
+                    <ul>
+                      {formData.selectedServices.map(serviceId => {
+                        const service = services.find(s => s.id === serviceId);
+                        return service ? (
+                          <li key={serviceId}>
+                            {service.name} - {parseInt(service.price).toLocaleString('vi-VN')}đ
+                          </li>
+                        ) : null;
+                      })}
+                    </ul>
+                  </div>
+                  <div className="summary-total">
+                    <strong>Tổng tiền:</strong> 
+                    {formData.selectedServices.reduce((total, serviceId) => {
+                      const service = services.find(s => s.id === serviceId);
+                      return total + (service ? parseInt(service.price) : 0);
+                    }, 0).toLocaleString('vi-VN')}đ
+                  </div>
+                </div>
+                
+                <div className="payment-section">
+                  <h3>Chọn phương thức thanh toán</h3>
+                  <div className="payment-methods">
+                    <label className={`payment-method ${paymentMethod === 'vnpay' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="vnpay"
+                        checked={paymentMethod === 'vnpay'}
+                        onChange={() => setPaymentMethod('vnpay')}
+                      />
+                      <img 
+                        src="https://sandbox.vnpayment.vn/paymentv2/images/brands/logo.svg" 
+                        alt="VNPAY" 
+                        style={{ maxHeight: "30px" }}
+                      />
+                      <span>Thanh toán qua VNPAY</span>
+                    </label>
+                    
+                    <label className={`payment-method ${paymentMethod === 'cash' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="cash"
+                        checked={paymentMethod === 'cash'}
+                        onChange={() => setPaymentMethod('cash')}
+                      />
+                      <i className="fas fa-money-bill-wave"></i>
+                      <span>Thanh toán tại cửa hàng</span>
+                    </label>
+                  </div>
+                  
+                  {paymentMethod === 'cash' && (
+                    <div className="form-group">
+                      <label>Ghi chú</label>
+                      <textarea
+                        value={paymentNotes}
+                        onChange={(e) => setPaymentNotes(e.target.value)}
+                        placeholder="Ghi chú thanh toán (nếu có)"
+                      ></textarea>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="btn-primary"
+                  onClick={handleProcessPayment}
+                  disabled={isProcessingPayment}
+                  style={{ width: '30%' }}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      {paymentMethod === 'vnpay' ? 
+                        'Thanh toán online' : 
+                        'Xác nhận thanh toán tại cửa hàng'}
+                    </>
+                  )}
                 </button>
               </div>
             </div>

@@ -186,9 +186,36 @@ const spaAppointmentController = {
                     'full_name', 'phone_number', 'services']
         });
       }
+
+      // Đảm bảo payment_method luôn có giá trị
+      if (!appointmentData.payment_method) {
+        appointmentData.payment_method = 'cash'; // Đặt giá trị mặc định
+      }
+
+      // Xác định payment_method
+      if (appointmentData.payment_method) {
+        // Nếu là 'vnpay', chuyển đổi thành 'e-wallet' để lưu vào database
+        if (appointmentData.payment_method === 'vnpay') {
+          appointmentData.payment_method = 'e-wallet';
+        }
+      }
+
+      // Đặt trạng thái ban đầu dựa vào phương thức thanh toán
+      if (!appointmentData.status) {
+        // Nếu là thanh toán tiền mặt, đặt trạng thái là "chờ xác nhận"
+        appointmentData.status = 'pending';
+      }
       
       // Tạo lịch hẹn
       const newAppointment = await spaAppointmentModel.create(appointmentData, services);
+      
+      // Lưu lại phương thức thanh toán gốc trước khi chuyển đổi hiển thị
+      const originalPaymentMethod = newAppointment.payment_method;
+
+      // Chuyển đổi lại payment_method từ 'e-wallet' thành 'vnpay' khi trả về kết quả
+      if (newAppointment.payment_method === 'e-wallet') {
+        newAppointment.payment_method = 'vnpay';
+      }
       
       // Sau khi tạo lịch hẹn thành công, gửi email xác nhận
       if (appointmentData.email) {
@@ -223,7 +250,6 @@ const spaAppointmentController = {
               } catch (e) {
                 console.error('Error fetching service details:', e);
                 
-                // Fallback tốt hơn, không hiển thị ID
                 return {
                   name: "Dịch vụ spa",
                   price: service.price
@@ -232,25 +258,40 @@ const spaAppointmentController = {
             })
           );
 
-          // Tạo nội dung email
-          const emailSubject = `Xác nhận đặt lịch spa thú cưng - ${newAppointment.id}`;
-          const emailContent = generateBookingConfirmationEmail(
-            newAppointment, 
-            serviceDetails, 
-            appointmentData.full_name
-          );
-          
-          // Gửi email
-          await emailController.sendBookingConfirmationEmail(
-            appointmentData.email,
-            emailSubject,
-            emailContent
-          );
-          
-          console.log('Đã gửi email xác nhận đến:', appointmentData.email);
+          // Log thêm thông tin để debug
+          console.log('Kiểm tra phương thức thanh toán cho email:', {
+            payment_method: newAppointment.payment_method,
+            originalPaymentMethod: originalPaymentMethod,
+            appointmentDataPaymentMethod: appointmentData.payment_method
+          });
+
+          // Kiểm tra phương thức thanh toán chính xác hơn
+          if (appointmentData.payment_method === 'cash' || newAppointment.payment_method === 'cash') {
+            // Tạo nội dung email cho thanh toán tiền mặt
+            const emailSubject = `Xác nhận đặt lịch spa thú cưng - ${newAppointment.id}`;
+            const emailContent = generateBookingConfirmationEmail(
+              newAppointment, 
+              serviceDetails, 
+              appointmentData.full_name
+            );
+            
+            console.log('Payment method trước khi gửi email (CASH):', newAppointment.payment_method);
+            console.log('Gửi email xác nhận cho thanh toán tiền mặt');
+            
+            // Gửi email
+            await emailController.sendBookingConfirmationEmail(
+              appointmentData.email,
+              emailSubject,
+              emailContent,
+              newAppointment
+            );
+            
+            console.log('Đã gửi email xác nhận đến:', appointmentData.email);
+          } else {
+            console.log('Đặt lịch với phương thức VNPAY - email sẽ được gửi sau khi thanh toán thành công');
+          }
         } catch (emailError) {
           console.error('Lỗi khi gửi email xác nhận:', emailError);
-          // Không trả về lỗi này vì lịch hẹn vẫn đã được tạo thành công
         }
       }
       
@@ -401,6 +442,14 @@ const spaAppointmentController = {
         });
       }
       
+      // Xử lý payment_method nếu có
+      if (appointmentData.payment_method) {
+        // Nếu là 'vnpay', chuyển đổi thành 'e-wallet' để lưu vào database
+        if (appointmentData.payment_method === 'vnpay') {
+          appointmentData.payment_method = 'e-wallet';
+        }
+      }
+      
       // Kiểm tra trạng thái lịch hẹn nếu cập nhật trạng thái
       if (appointmentData.status && !['pending', 'confirmed', 'completed', 'cancelled'].includes(appointmentData.status)) {
         return res.status(400).json({ 
@@ -453,6 +502,11 @@ const spaAppointmentController = {
       
       // Thực hiện cập nhật
       const updatedAppointment = await spaAppointmentModel.update(id, appointmentData, services);
+      
+      // Chuyển đổi lại payment_method từ 'e-wallet' thành 'vnpay' khi trả về kết quả
+      if (updatedAppointment.payment_method === 'e-wallet') {
+        updatedAppointment.payment_method = 'vnpay';
+      }
       
       res.json({
         message: 'Cập nhật lịch hẹn thành công',
@@ -616,6 +670,14 @@ const spaAppointmentController = {
         });
       }
       
+      // Không cho phép khôi phục nếu đã thanh toán qua VNPAY
+      if (appointment.payment_method === 'e-wallet' && appointment.payment_status === 'paid') {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể khôi phục lịch hẹn đã thanh toán qua VNPAY'
+        });
+      }
+      
       // Kiểm tra slot còn trống không
       const date = appointment.appointment_date.toISOString().split('T')[0];
       let time;
@@ -733,25 +795,20 @@ const spaAppointmentController = {
 
 // Hàm tạo nội dung email xác nhận đặt lịch
 function generateBookingConfirmationEmail(appointment, services, customerName) {
-  // Định dạng ngày tháng
+  // Giữ nguyên các định dạng hiện có
   const formatDate = (dateString) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('vi-VN', options);
   };
   
-  // Format giờ - xử lý đúng múi giờ
   const formatTime = (timeString) => {
     if (!timeString) return '';
     
-    // console.log('formatTime input:', timeString, typeof timeString);
-    
     // Xử lý trường hợp timeString là đối tượng Date
     if (timeString instanceof Date) {
-      // Sử dụng getUTCHours thay vì getHours để giữ nguyên giờ
       return `${timeString.getUTCHours().toString().padStart(2, '0')}:${timeString.getUTCMinutes().toString().padStart(2, '0')}`;
     }
     
-    // Xử lý trường hợp timeString là đối tượng SQL Server Time
     if (typeof timeString === 'object' && timeString !== null) {
       try {
         const timeStr = timeString.toString();
@@ -764,30 +821,43 @@ function generateBookingConfirmationEmail(appointment, services, customerName) {
       }
     }
     
-    // Đảm bảo timeString là chuỗi
     const timeStr = String(timeString);
     
-    // XỬ LÝ TRƯỜNG HỢP CHUỖI ISO CÓ Z (UTC)
     if (timeStr.endsWith('Z') && timeStr.includes('T')) {
-      // Trích xuất trực tiếp giờ phút từ chuỗi mà không chuyển đổi múi giờ
       const timePart = timeStr.split('T')[1].replace('Z', '');
       return timePart.split(':').slice(0, 2).join(':');
     }
     
-    // Kiểm tra xem giờ có phải là định dạng ISO date đầy đủ không
     if (timeStr.includes('T')) {
       const timePart = timeStr.split('T')[1].split('.')[0];
       const [hour, minute] = timePart.split(':');
       return `${hour}:${minute}`;
     }
     
-    // Xử lý định dạng HH:MM:SS (loại bỏ seconds)
     if (timeStr.includes(':')) {
       return timeStr.split(':').slice(0, 2).join(':');
     }
     
     return timeStr;
   };
+  
+  // Thêm hàm định dạng phương thức thanh toán
+  const getPaymentMethodText = (method) => {
+    if (!method) return 'Chưa xác định';
+    
+    switch(method) {
+      case 'cash': return 'Tiền mặt (thanh toán tại cửa hàng)';
+      case 'vnpay': 
+      case 'e-wallet': return 'VNPAY';
+      default: return method;
+    }
+  };
+  
+  // Đảm bảo payment_method đã được chuyển đổi đúng
+  let displayPaymentMethod = appointment.payment_method;
+  if (displayPaymentMethod === 'e-wallet') {
+    displayPaymentMethod = 'vnpay';
+  }
   
   // Tạo nội dung HTML cho email
   return `
@@ -805,6 +875,7 @@ function generateBookingConfirmationEmail(appointment, services, customerName) {
         <p><strong>Ngày hẹn:</strong> ${formatDate(appointment.appointment_date)}</p>
         <p><strong>Giờ hẹn:</strong> ${formatTime(appointment.appointment_time)}</p>
         <p><strong>Thú cưng:</strong> ${appointment.pet_name} (${appointment.pet_type === 'dog' ? 'Chó' : 'Mèo'})</p>
+        <p><strong>Phương thức thanh toán:</strong> ${getPaymentMethodText(displayPaymentMethod)}</p>
         
         <h3 style="color: #333; margin-top: 20px;">Dịch vụ đã chọn</h3>
         <table style="width: 100%; border-collapse: collapse;">
@@ -843,4 +914,7 @@ function generateBookingConfirmationEmail(appointment, services, customerName) {
   `;
 }
 
-module.exports = spaAppointmentController;
+module.exports = {
+  ...spaAppointmentController,
+  generateBookingConfirmationEmail
+};

@@ -29,56 +29,84 @@ const PaymentHistory = ({ appointmentId }) => {
     }
   };
 
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('vi-VN');
+  };
+
+  const getPaymentMethodLabel = (method) => {
+    switch(method) {
+      case 'cash': return 'Tiền mặt';
+      case 'bank_transfer': return 'Chuyển khoản';
+      case 'vnpay': return 'VNPay';
+      case 'e-wallet': return 'Ví điện tử';
+      case 'momo': return 'MoMo';
+      default: return method;
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch(status) {
+      case 'completed': return { label: 'Đã hoàn thành', className: 'status-completed' };
+      case 'pending': return { label: 'Đang xử lý', className: 'status-pending' };
+      case 'failed': return { label: 'Thất bại', className: 'status-failed' };
+      default: return { label: status, className: '' };
+    }
+  };
+
   if (loading) {
     return (
-      <div className="ph-loading">
-        <div className="ph-spinner-small"></div>
-        <span>Đang tải dữ liệu...</span>
+      <div className="loading">
+        <div className="spinner-small"></div>
+        <p>Đang tải lịch sử thanh toán...</p>
       </div>
     );
   }
 
   if (error) {
-    return <div className="ph-error-message">{error}</div>;
+    return <div className="error-message">{error}</div>;
   }
 
-  // Hiển thị dữ liệu mẫu như trong ảnh
   return (
-    <div className="ph-payment-history">
-      <table className="ph-history-table">
-        <thead>
-          <tr>
-            <th>Mã giao dịch</th>
-            <th>Phương thức</th>
-            <th>Số tiền</th>
-            <th>Thời gian</th>
-            <th>Trạng thái</th>
-            <th>Ghi chú</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.length > 0 ? (
-            history.map(payment => (
-              <tr key={payment.id}>
-                <td>{payment.transaction_id || "14928014"}</td>
-                <td>Ví điện tử</td>
-                <td>{payment.amount || "120.000đ"}</td>
-                <td>15:12:47<br />26/4/2025</td>
-                <td>
-                  <span className="ph-status-badge ph-status-completed">
-                    Đã hoàn thành
-                  </span>
-                </td>
-                <td>Thanh toán qua VNPay -<br />Ngân hàng: NCB</td>
+    <div className="payment-history">
+      {history.length === 0 ? (
+        <p className="no-history">Chưa có giao dịch thanh toán nào</p>
+      ) : (
+        <div className="history-table-container">
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>Mã giao dịch</th>
+                <th>Phương thức</th>
+                <th>Số tiền</th>
+                <th>Thời gian</th>
+                <th>Trạng thái</th>
+                <th>Ghi chú</th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6" className="ph-no-history">Không có dữ liệu thanh toán</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {history.map(payment => {
+                const statusInfo = getStatusLabel(payment.status);
+                return (
+                  <tr key={payment.id}>
+                    <td>{payment.id}</td>
+                    <td>{getPaymentMethodLabel(payment.payment_method)}</td>
+                    <td className="amount">{parseInt(payment.amount).toLocaleString('vi-VN')}đ</td>
+                    <td>{formatDateTime(payment.payment_date)}</td>
+                    <td>
+                      <span className={`status-badge ${statusInfo.className}`}>
+                        {statusInfo.label}
+                      </span>
+                    </td>
+                    <td className="notes">{payment.notes || '-'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

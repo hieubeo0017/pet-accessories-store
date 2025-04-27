@@ -224,16 +224,17 @@ const spaAppointmentModel = {
           .input('email', appointmentData.email || null)
           .input('total_amount', sql.Decimal(10, 2), appointmentData.total_amount)
           .input('payment_status', appointmentData.payment_status || 'pending')
+          .input('payment_method', sql.VarChar(20), appointmentData.payment_method || null)  // Thêm dòng này
           .query(`
             INSERT INTO spa_appointments (
               id, user_id, pet_name, pet_type, pet_breed, pet_size, pet_notes,
               appointment_date, appointment_time, status, full_name, phone_number,
-              email, total_amount, payment_status
+              email, total_amount, payment_status, payment_method  -- Thêm payment_method vào đây
             )
             VALUES (
               @id, @user_id, @pet_name, @pet_type, @pet_breed, @pet_size, @pet_notes,
               @appointment_date, @appointment_time, @status, @full_name, @phone_number,
-              @email, @total_amount, @payment_status
+              @email, @total_amount, @payment_status, @payment_method  -- Thêm @payment_method vào đây
             );
           `);
         
@@ -348,6 +349,31 @@ const spaAppointmentModel = {
     }
   },
 
+  // Cập nhật phương thức thanh toán
+  updatePaymentMethod: async (id, paymentMethod) => {
+    try {
+      console.log(`Cập nhật phương thức thanh toán cho lịch hẹn ${id} thành ${paymentMethod}`);
+      const pool = await connectDB();
+      
+      // Cập nhật phương thức thanh toán
+      await pool.request()
+        .input('id', sql.VarChar(50), id)
+        .input('payment_method', sql.VarChar(20), paymentMethod)
+        .query(`
+          UPDATE spa_appointments
+          SET payment_method = @payment_method,
+              updated_at = GETDATE()
+          WHERE id = @id
+        `);
+      
+      // Lấy thông tin lịch hẹn sau khi cập nhật
+      return await spaAppointmentModel.getById(id);
+    } catch (error) {
+      console.error('Error in spaAppointmentModel.updatePaymentMethod:', error);
+      throw error;
+    }
+  },
+
   // Cập nhật thông tin lịch hẹn
   update: async (id, appointmentData, services = null) => {
     try {
@@ -440,6 +466,12 @@ const spaAppointmentModel = {
         if (appointmentData.payment_status) {
           updateFields.push('payment_status = @payment_status');
           updateRequest.input('payment_status', appointmentData.payment_status);
+        }
+
+        // Cập nhật phương thức thanh toán nếu có
+        if (appointmentData.payment_method) {
+          updateFields.push('payment_method = @payment_method');
+          updateRequest.input('payment_method', sql.VarChar(20), appointmentData.payment_method);
         }
 
         // Cập nhật tổng tiền nếu có

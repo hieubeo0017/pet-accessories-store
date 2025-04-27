@@ -137,7 +137,26 @@ const EmailAuth = ({ email, onVerified, onCancel }) => {
       {error && <div className="error-message">{error}</div>}
       
       <div className="auth-footer">
-        <button className="btn-cancel" onClick={onCancel}>Hủy</button>
+        <button 
+          type="button" 
+          onClick={onCancel} 
+          className="cancel-button"
+          style={{
+            padding: '12px 25px',
+            backgroundColor: '#f5f5f5', // Màu xám nhạt thay vì màu đỏ
+            color: '#616161',           // Màu chữ xám đậm thay vì đỏ
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            marginRight: '10px',
+            width: '100%'              // Chiếm hết chiều rộng của container
+          }}
+        >
+          Hủy
+        </button>
       </div>
     </div>
   );

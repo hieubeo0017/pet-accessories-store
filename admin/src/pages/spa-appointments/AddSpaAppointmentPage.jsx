@@ -27,6 +27,7 @@ const AddSpaAppointmentPage = () => {
     pet_notes: '',
     status: 'pending',
     payment_status: 'pending',
+    payment_method: 'cash', // Thêm payment_method với giá trị mặc định
     selected_services: []
   });
   
@@ -88,7 +89,10 @@ const AddSpaAppointmentPage = () => {
     
     setIsCheckingAvailability(true);
     try {
-      const formattedDate = date.toISOString().split('T')[0];
+      // Sử dụng cùng một cách lấy ngày như EditSpaAppointmentPage
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      console.log('Ngày đã được format để kiểm tra availability:', formattedDate);
       const result = await fetchTimeSlotAvailability(formattedDate);
       setAvailableSlots(result.data || {});
     } catch (error) {
@@ -150,6 +154,7 @@ const AddSpaAppointmentPage = () => {
           appointment_time: formattedTime, // Sử dụng giờ đã định dạng nhất quán
           status: formData.status,
           payment_status: formData.payment_status,
+          payment_method: formData.payment_method, // Thêm vào đây
           total_amount: calculateTotal()
         },
         services: formData.selected_services.map(serviceId => {
@@ -289,7 +294,9 @@ const AddSpaAppointmentPage = () => {
                 onChange={(date) => {
                   setFormData(prev => ({
                     ...prev,
-                    appointment_date: date ? date.toISOString().split('T')[0] : '',
+                    appointment_date: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : 
+                      '',
                     appointment_time: '' // Reset giờ khi thay đổi ngày
                   }));
                   if (date) checkAvailability(date);
@@ -407,6 +414,19 @@ const AddSpaAppointmentPage = () => {
                 <option value="paid">Đã thanh toán</option>
               </select>
             </div>
+          </div>
+          
+          {/* Thay thế phương thức thanh toán */}
+          <div className="form-group">
+            <label>Phương thức thanh toán</label>
+            <select
+              name="payment_method"
+              value={formData.payment_method}
+              onChange={handleChange}
+            >
+              <option value="cash">Tiền mặt</option>
+              <option value="vnpay">VNPAY</option>
+            </select>
           </div>
         </div>
         

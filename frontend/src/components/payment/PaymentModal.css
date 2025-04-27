@@ -116,3 +116,10 @@
     grid-template-columns: 1fr;
   }
 }
+/* Thêm vào file PaymentModal.css */
+.fixed-amount {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+  border-color: #ddd;
+  color: #333;
+}

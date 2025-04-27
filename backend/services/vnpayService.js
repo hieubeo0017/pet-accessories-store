@@ -100,19 +100,19 @@ const verifyReturnUrl = (vnpParams) => {
   // Tạo chuỗi signData sử dụng querystring theo đúng cách của vnpay
   const signData = querystring.stringify(sortedParams, { encode: false });
   
-  // Tạo chữ ký mới - sử dụng new Buffer thay vì Buffer.from
+  // Tạo chữ ký mới
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
-  const signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex").toUpperCase();
+  const signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
   
   console.log("========= VNPAY VERIFY DEBUG =========");
   console.log("Sign data:", signData);
-  console.log("Generated hash:", signed);
+  console.log("Generated hash:", signed.toUpperCase());
   console.log("Received hash:", secureHash);
-  console.log("Hashes match?", secureHash === signed);
+  console.log("Hashes match?", secureHash.toLowerCase() === signed.toLowerCase());
   console.log("====================================");
   
-  // Kết quả của việc so sánh được trả về ở đây
-  return secureHash.toLowerCase() === vnpParams['vnp_SecureHash'].toLowerCase();
+  // SỬA LỖI Ở ĐÂY: Đảm bảo so sánh không phân biệt hoa thường
+  return secureHash.toLowerCase() === signed.toLowerCase();
 };
 
 // Hàm sắp xếp object theo thứ tự từ điển

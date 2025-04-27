@@ -63,17 +63,40 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.booking-detail-row, 
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eaeaea;
 }
 
 .info-row:last-child {
   border-bottom: none;
 }
 
+/* Đồng bộ style cho label */
+.label, 
 .info-label {
   font-weight: 500;
   color: #555;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+}
+
+/* Đồng bộ style cho value */
+.value, 
+.info-value {
+  font-weight: 600;
+  color: #333;
 }
 
 .info-value {
@@ -89,6 +112,20 @@
 .status-confirmed {
   color: #4caf50;
   font-weight: 600;
+}
+
+/* Style cho badge trạng thái */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.confirmed {
+  background-color: #e3fcef;
+  color: #0c6b58;
+  border: 1px solid #c3e6cf;
 }
 
 /* Danh sách dịch vụ */

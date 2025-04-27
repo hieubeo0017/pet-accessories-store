@@ -1,5 +1,7 @@
 const spaPaymentModel = require('../models/spaPaymentModel');
 const spaAppointmentModel = require('../models/spaAppointmentModel');
+const spaServiceModel = require('../models/spaServiceModel');
+const emailController = require('../controllers/emailController');
 
 const spaPaymentController = {
   // Tạo thanh toán mới
@@ -33,6 +35,47 @@ const spaPaymentController = {
         });
       }
       
+      // Kiểm tra và cập nhật phương thức thanh toán nếu khác với phương thức lịch hẹn
+      if (appointment.payment_method !== paymentData.payment_method) {
+        console.log(`Phát hiện thay đổi phương thức thanh toán từ ${appointment.payment_method} sang ${paymentData.payment_method}`);
+        
+        // Cập nhật phương thức thanh toán trong database
+        await spaAppointmentModel.updatePaymentMethod(appointment_id, paymentData.payment_method);
+        
+        // Gửi email xác nhận nếu chuyển từ VNPAY sang thanh toán tiền mặt
+        if (appointment.payment_method === 'e-wallet' && paymentData.payment_method === 'cash') {
+          try {
+            // Lấy thông tin chi tiết về dịch vụ đã đặt
+            const serviceDetails = await spaServiceModel.getServicesByAppointmentId(appointment_id);
+            
+            // Lấy thông tin cập nhật của lịch hẹn
+            const updatedAppointment = await spaAppointmentModel.getById(appointment_id);
+            updatedAppointment.payment_method = 'cash';  // Đảm bảo hiển thị đúng trong email
+            
+            // Tạo nội dung email
+            const emailSubject = `Xác nhận đặt lịch và thanh toán spa thú cưng - ${updatedAppointment.id}`;
+            const emailContent = require('../controllers/spaAppointmentController').generateBookingConfirmationEmail(
+              updatedAppointment,
+              serviceDetails,
+              updatedAppointment.full_name
+            );
+            
+            // Gửi email nếu có địa chỉ email
+            if (updatedAppointment.email) {
+              await emailController.sendBookingConfirmationEmail(
+                updatedAppointment.email,
+                emailSubject,
+                emailContent,
+                updatedAppointment
+              );
+              console.log(`Đã gửi email xác nhận sau khi chuyển sang thanh toán tiền mặt đến: ${updatedAppointment.email}`);
+            }
+          } catch (emailError) {
+            console.error('Lỗi khi gửi email xác nhận sau khi chuyển phương thức thanh toán:', emailError);
+          }
+        }
+      }
+      
       // Tạo dữ liệu thanh toán
       const payment = await spaPaymentModel.create({
         appointment_id,
@@ -42,6 +85,18 @@ const spaPaymentController = {
         notes: paymentData.notes,
         update_appointment_status: paymentData.amount >= appointment.total_amount
       });
+      
+      // Cập nhật trạng thái lịch hẹn dựa vào phương thức thanh toán và số tiền
+      if (parseFloat(paymentData.amount) >= parseFloat(appointment.total_amount)) {
+        if (paymentData.payment_method === 'cash') {
+          // Tiền mặt - vẫn giữ trạng thái "pending" (chờ xác nhận)
+          console.log(`Thanh toán tiền mặt đủ cho lịch hẹn ${appointment_id}, giữ trạng thái chờ xác nhận`);
+        } else {
+          // Các phương thức thanh toán online - đổi thành "confirmed" (đã xác nhận)
+          await spaAppointmentModel.updateStatus(appointment_id, 'confirmed');
+          console.log(`Đã tự động cập nhật trạng thái lịch hẹn ${appointment_id} thành 'confirmed' sau khi thanh toán online đủ`);
+        }
+      }
       
       // Lấy thông tin lịch hẹn cập nhật
       const updatedAppointment = await spaAppointmentModel.getById(appointment_id);
@@ -136,6 +191,11 @@ const spaPaymentController = {
           update_appointment_status: true
         });
         
+        // THÊM MỚI: Cập nhật trạng thái lịch hẹn thành "confirmed" (đã xác nhận)
+        // để ngăn người dùng hủy lịch sau khi đã thanh toán
+        await spaAppointmentModel.updateStatus(appointmentId, 'confirmed');
+        console.log(`Đã tự động cập nhật trạng thái lịch hẹn ${appointmentId} thành 'confirmed' sau khi thanh toán thành công`);
+        
         res.json({ success: true, message: 'Thanh toán thành công' });
       } else {
         // Thanh toán thất bại
@@ -146,6 +206,97 @@ const spaPaymentController = {
       res.status(500).json({
         success: false,
         message: 'Lỗi khi xử lý callback thanh toán',
+        error: error.message
+      });
+    }
+  },
+
+  // Đổi phương thức thanh toán của một lịch hẹn
+  changePaymentMethod: async (req, res) => {
+    try {
+      const { appointment_id } = req.params;
+      const { new_payment_method, transaction_id } = req.body;
+      
+      // Validate dữ liệu đầu vào
+      if (!new_payment_method) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu phương thức thanh toán mới'
+        });
+      }
+      
+      // Kiểm tra phương thức thanh toán hợp lệ
+      if (!['cash', 'vnpay', 'credit_card', 'bank_transfer', 'e-wallet'].includes(new_payment_method)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Phương thức thanh toán không hợp lệ'
+        });
+      }
+      
+      // Kiểm tra lịch hẹn tồn tại
+      const appointment = await spaAppointmentModel.getById(appointment_id);
+      if (!appointment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy lịch hẹn'
+        });
+      }
+      
+      // Lưu phương thức thanh toán cũ để ghi chú
+      const oldPaymentMethod = appointment.payment_method || 'cash';
+      
+      // Map vnpay thành e-wallet nếu người dùng chọn vnpay
+      const dbPaymentMethod = new_payment_method === 'vnpay' ? 'e-wallet' : new_payment_method;
+
+      // Cập nhật phương thức thanh toán trong bảng appointments
+      await spaAppointmentModel.updatePaymentMethod(appointment_id, new_payment_method);
+
+      // Cập nhật payment_status thành paid nếu chuyển sang VNPAY
+      if (new_payment_method === 'vnpay') {
+        console.log(`Cập nhật trạng thái thanh toán của lịch hẹn ${appointment_id} thành paid khi chuyển sang VNPAY`);
+        await spaAppointmentModel.updatePaymentStatus(appointment_id, 'paid');
+        
+        // THÊM MỚI: Cập nhật thêm trạng thái lịch hẹn thành confirmed
+        if (appointment.status !== 'completed' && appointment.status !== 'cancelled') {
+          await spaAppointmentModel.updateStatus(appointment_id, 'confirmed');
+          console.log(`Đã cập nhật trạng thái lịch hẹn ${appointment_id} thành 'confirmed'`);
+        }
+      }
+
+      // Tìm bản ghi thanh toán gần nhất để cập nhật
+      const latestPayment = await spaPaymentModel.findLatestByAppointmentId(appointment_id);
+      
+      if (latestPayment) {
+        // Cập nhật phương thức thanh toán của bản ghi hiện có
+        const notes = `Đổi phương thức thanh toán từ ${oldPaymentMethod} sang ${new_payment_method}`;
+        await spaPaymentModel.updatePaymentMethod(latestPayment.id, dbPaymentMethod, notes);
+        console.log(`Đã cập nhật phương thức thanh toán của bản ghi ${latestPayment.id} thành ${dbPaymentMethod}`);
+      } else {
+        // Nếu không tìm thấy bản ghi thanh toán, tạo mới
+        await spaPaymentModel.create({
+          appointment_id,
+          amount: parseFloat(appointment.total_amount),
+          payment_method: dbPaymentMethod,
+          transaction_id: transaction_id || null,
+          status: 'completed',
+          notes: `Đổi phương thức thanh toán từ ${oldPaymentMethod} sang ${new_payment_method}`,
+          update_appointment_status: false
+        });
+      }
+      
+      // Lấy thông tin lịch hẹn đã cập nhật
+      const updatedAppointment = await spaAppointmentModel.getById(appointment_id);
+      
+      res.json({
+        success: true,
+        message: 'Đổi phương thức thanh toán thành công',
+        data: updatedAppointment
+      });
+    } catch (error) {
+      console.error('Error changing payment method:', error);
+      res.status(500).json({
+        success: false, 
+        message: 'Lỗi khi đổi phương thức thanh toán',
         error: error.message
       });
     }

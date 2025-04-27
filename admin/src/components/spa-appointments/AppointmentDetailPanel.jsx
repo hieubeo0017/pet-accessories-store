@@ -76,6 +76,17 @@ const AppointmentDetailPanel = ({ appointment, onStatusUpdate, onPaymentUpdate }
             </span>
           </div>
           <div className="info-item">
+            <span className="label">Phương thức thanh toán:</span>
+            <span className="value">
+              {appointment.payment_method === 'cash' ? 'Tiền mặt' :
+               appointment.payment_method === 'vnpay' ? 'VNPAY' :
+               appointment.payment_method === 'credit_card' ? 'Thẻ tín dụng' :
+               appointment.payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
+               appointment.payment_method === 'e-wallet' ? 'Ví điện tử' :
+               'Chưa xác định'}
+            </span>
+          </div>
+          <div className="info-item">
             <span className="label">Tổng tiền:</span>
             <span className="value price">{formatCurrency(appointment.total_amount)} VNĐ</span>
           </div>

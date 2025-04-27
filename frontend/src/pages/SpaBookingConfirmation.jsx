@@ -131,25 +131,28 @@ const SpaBookingConfirmation = () => {
         <div className="confirmation-details">
           <div className="confirmation-info">
             <h2>Chi tiết đặt lịch</h2>
-            <div className="info-row">
-              <span className="info-label">Mã đặt lịch:</span>
-              <span className="info-value">{appointment.id}</span>
+            <div className="booking-detail-row">
+              <span className="label">Mã đặt lịch:</span>
+              <span className="value">{appointment.id}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">Ngày hẹn:</span>
-              <span className="info-value">{formatDate(appointment.appointment_date)}</span>
+            <div className="booking-detail-row">
+              <span className="label">Ngày hẹn:</span>
+              <span className="value">{formatDate(appointment.appointment_date)}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">Giờ hẹn:</span>
-              <span className="info-value">{formatTime(appointment.appointment_time)}</span>
+            <div className="booking-detail-row">
+              <span className="label">Giờ hẹn:</span>
+              <span className="value">{formatTime(appointment.appointment_time)}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">Trạng thái:</span>
-              <span className={`info-value status-${appointment.status || 'pending'}`}>
-                {appointment.status === 'pending' ? 'Chờ xác nhận' : 
-                 appointment.status === 'confirmed' ? 'Đã xác nhận' : 
-                 appointment.status === 'completed' ? 'Đã hoàn thành' : 
-                 appointment.status === 'cancelled' ? 'Đã hủy' : 'Chờ xác nhận'}
+            <div className="booking-detail-row">
+              <span className="label">Trạng thái:</span>
+              <span className="value status-badge confirmed">Đã xác nhận</span>
+            </div>
+            <div className="booking-detail-row">
+              <span className="label">Phương thức thanh toán:</span>
+              <span className="value">
+                {appointment.payment_method === 'cash' ? 'Tiền mặt' : 
+                 appointment.payment_method === 'vnpay' || appointment.payment_method === 'e-wallet' ? 'VNPAY' : 
+                 'Chưa xác định'}
               </span>
             </div>
           </div>
