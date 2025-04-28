@@ -58,6 +58,8 @@ app.use('/api/spa-appointments', spaAppointmentRoutes); // Routes (thêm dòng n
 app.use('/api/spa-time-slots', spaTimeSlotRoutes); // Thêm vào file server.js hoặc app.js
 app.use('/api/payments', spaPaymentRoutes); // Thêm dòng này vào phần đăng ký routes trong server.js
 app.use('/api/vnpay', vnpayRoutes); // Thêm vào phần đăng ký routes
+// Thêm dòng này vào phần đăng ký routes
+app.use('/api/search', require('./routes/searchRoutes'));
 
 // Basic test route
 app.get('/', (req, res) => {

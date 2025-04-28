@@ -4,6 +4,11 @@ import { Link } from 'react-router-dom';
 const ServiceCard = ({ service, children, highlight }) => {
   // Cải thiện cách lấy đường dẫn ảnh để xử lý nhiều trường hợp
   const getImageUrl = () => {
+    // Ưu tiên sử dụng trường image từ API tìm kiếm
+    if (service.image) {
+      return service.image;
+    }
+    
     // 1. Kiểm tra xem service có mảng images không
     if (service.images && service.images.length > 0) {
       // Ưu tiên lấy ảnh được đánh dấu là primary

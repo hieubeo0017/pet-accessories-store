@@ -2,8 +2,10 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { FaSearch, FaFilter, FaTimes, FaDog, FaPaw, FaTag, FaMoneyBillWave } from 'react-icons/fa';
 import ProductCard from '../components/products/ProductCard';
+
 import { addItem } from '../store/cartSlice';
 import { fetchCategories, fetchProductsByCategory, fetchAllBrands } from '../services/api';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import './FoodPage.css';
 
 // Thêm hàm debounce
@@ -18,11 +20,14 @@ const debounce = (func, delay) => {
 };
 
 const FoodPage = () => {
+    const location = useLocation();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [brands, setBrands] = useState([]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [foodCategories, setFoodCategories] = useState([]);
     
     // Tách state filters thành 2 phần: filters chính và priceInputs tạm thời
     const [filters, setFilters] = useState({
@@ -30,6 +35,7 @@ const FoodPage = () => {
         brand: 'all',
         minPrice: '',
         maxPrice: '',
+        categories: []
     });
     
     // Thêm state riêng cho input giá
@@ -52,6 +58,7 @@ const FoodPage = () => {
     const loadFoods = async (filtersToUse = filters) => {
         try {
             setLoading(true);
+            console.log("Loading foods with filters:", filtersToUse); // Debug
             
             const categoriesResponse = await fetchCategories({ type: 'food' });
             const foodCategoryIds = categoriesResponse.data.map(category => category.id);
@@ -81,6 +88,7 @@ const FoodPage = () => {
                 }
             });
             
+            console.log("Found foods:", allFoods.length); // Debug
             setFoods(allFoods);
             setError(null);
         } catch (error) {

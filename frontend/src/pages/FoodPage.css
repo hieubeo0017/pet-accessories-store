@@ -261,6 +261,22 @@
   font-size: 18px;
 }
 
+/* Thêm vào file CSS của trang */
+
+.page-content {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 15px; /* Giảm gap từ 30px xuống 15px */
+  margin-top: 20px;
+  padding-left: 0; /* Đảm bảo không có padding trái */
+}
+
+.sidebar-container {
+  transition: all 0.3s ease;
+  padding-left: 0; /* Loại bỏ padding trái nếu có */
+  margin-left: 0; /* Loại bỏ margin trái nếu có */
+}
+
 /* Responsive styles */
 @media (max-width: 1200px) {
   .products-grid {
@@ -300,6 +316,25 @@
 
   .filter-group {
     width: 100%;
+  }
+
+  .page-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar-container {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    margin-bottom: 0;
+  }
+  
+  .sidebar-container.open {
+    max-height: 2000px;
+    opacity: 1;
+    visibility: visible;
+    margin-bottom: 25px;
   }
 }
 

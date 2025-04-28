@@ -534,4 +534,26 @@ export const changePaymentMethod = async (appointmentId, newPaymentMethod, trans
   }
 };
 
+// Thêm export này vào frontend/src/services/api.js
+export const searchAll = async (query, params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    // Nếu có query thì thêm vào params
+    if (query) queryParams.append('query', query);
+    
+    // Thêm các tham số khác
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.type) queryParams.append('type', params.type);
+    if (params.featured) queryParams.append('featured', params.featured);
+    
+    const response = await api.get(`/search?${queryParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching:', error);
+    throw error;
+  }
+};
+
 export default api;
