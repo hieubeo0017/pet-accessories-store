@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,6 +13,11 @@ import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import LoginPage from './pages/Login';
+import RegisterPage from "@/pages/Register";
+import {useDispatch} from "react-redux";
+import {setUser} from "@/store/userSlice";
+import GuestGuard from "@/middleware/GuestGuard";
 
 // Sửa đường dẫn import cho các trang spa
 import SpaHomePage from './pages/SpaHomePage';
@@ -30,7 +35,16 @@ import PaymentCallbackPage from './pages/PaymentCallbackPage';
 import SearchPage from './pages/SearchPage';
 
 const App = () => {
-  return (
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            dispatch(setUser(JSON.parse(storedUser)));
+        }
+    }, [dispatch]);
+
+    return (
     <Router>
       <Header />
       <Navigation />
@@ -45,7 +59,7 @@ const App = () => {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          
+
           {/* Routes cho spa */}
           <Route path="/spa" element={<SpaHomePage />} />
           <Route path="/spa/services" element={<SpaServicesPage />} />
@@ -60,6 +74,19 @@ const App = () => {
 
           {/* Route cho search */}
           <Route path="/search" element={<SearchPage />} />
+            <Route
+                path="/login"
+                element={
+                    <GuestGuard>
+                        <LoginPage />
+                    </GuestGuard>
+                }
+            />
+            <Route path="/register" element={
+                <GuestGuard>
+                    <RegisterPage />
+                </GuestGuard>
+            } />
         </Routes>
       </main>
       <Footer />

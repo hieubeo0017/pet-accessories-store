@@ -41,48 +41,55 @@ import SpaTimeSlotsPage from './pages/spa-time-slots/SpaTimeSlotsPage';
 
 // Error page
 import NotFound from './pages/NotFound';
+import BlogsPage from "./pages/blogs/BlogsPage";
+import AddBlogPage from "./pages/blogs/AddBlogPage";
+import EditBlogPage from "./pages/blogs/EditBlogPage";
+import UsersPage from "./pages/users/UsersPage";
+import AddUserPage from "./pages/users/AddUserPage";
+import EditUserPage from "./pages/users/EditUserPage";
+import ReviewsPage from "./pages/reviews/UsersPage";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
-        
+
         {/* Product management */}
         <Route path="products">
           <Route index element={<ProductsPage />} />
           <Route path="add" element={<AddProductPage />} />
           <Route path="edit/:id" element={<EditProductPage />} /> {/* Cập nhật component */}
         </Route>
-        
+
         {/* Pet management */}
         <Route path="pets">
           <Route index element={<PetsPage />} />
           <Route path="add" element={<AddPetPage />} /> {/* Cập nhật component */}
           <Route path="edit/:id" element={<EditPetPage />} /> {/* Cập nhật component */}
         </Route>
-        
+
         {/* Category management */}
         <Route path="categories">
           <Route index element={<CategoriesPage />} />
           <Route path="add" element={<AddCategoryPage />} />
           <Route path="edit/:id" element={<EditCategoryPage />} /> {/* Cập nhật component */}
         </Route>
-        
+
         {/* Brand management */}
         <Route path="brands">
           <Route index element={<BrandsPage />} />
           <Route path="add" element={<AddBrandPage />} />
           <Route path="edit/:id" element={<EditBrandPage />} />
         </Route>
-        
+
         {/* Spa service management */}
         <Route path="spa-services">
           <Route index element={<SpaServicesPage />} />
           <Route path="add" element={<AddSpaServicesPage />} />
           <Route path="edit/:id" element={<EditSpaServicesPage />} />
         </Route>
-        
+
         {/* Spa appointment management */}
         <Route path="spa-appointments">
           <Route index element={<SpaAppointmentsPage />} />
@@ -95,7 +102,22 @@ function App() {
         <Route path="spa-time-slots">
           <Route index element={<SpaTimeSlotsPage />} />
         </Route>
-        
+
+        <Route path="blogs">
+          <Route index element={<BlogsPage />} />
+          <Route path="add" element={<AddBlogPage />} />
+          <Route path="edit/:id" element={<EditBlogPage />} />
+        </Route>
+
+        <Route path="users">
+          <Route index element={<UsersPage />} />
+          <Route path="add" element={<AddUserPage/>} />
+          <Route path="edit/:id" element={<EditUserPage />} />
+        </Route>
+        <Route path="reviews">
+          <Route index element={<ReviewsPage />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
