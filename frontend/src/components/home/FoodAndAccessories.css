@@ -228,3 +228,37 @@
   font-size: 18px;
   color: #666;
 }
+
+/* Thêm vào cuối file */
+
+.view-more-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.view-more-btn {
+  padding: 12px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+  min-width: 200px;
+  text-align: center;
+}
+
+.view-more-btn:hover {
+  background-color: var(--button-hover-color);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 576px) {
+  .view-more-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}

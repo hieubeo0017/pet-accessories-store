@@ -1,21 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { searchAll } from '../../services/api';
 import {FaSearch, FaShoppingCart, FaPhoneAlt, FaTimes, FaUserCircle, FaUser, FaSignOutAlt} from 'react-icons/fa';
 import './Header.css';
-import DropDownHeader from "@/components/common/DropDownHeader";
-
+import { logout } from '../../store/userSlice'; // Đảm bảo import action logout
 
 const Header = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchPopup, setShowSearchPopup] = useState(false);
     const [popularProducts, setPopularProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const cartItems = useSelector(state => state.cart.items);
     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     const searchRef = useRef(null);
+    const userDropdownRef = useRef(null);
+    
+    const user = useSelector(state => state.user);
 
     const getImageUrl = (imageUrl) => {
         if (!imageUrl) return '/images/placeholder.png';
@@ -37,8 +41,11 @@ const Header = () => {
     ];
 
     useEffect(() => {
-        // Xử lý click outside để đóng popup
+        // Xử lý click outside để đóng dropdown user và popup
         function handleClickOutside(event) {
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
+            }
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowSearchPopup(false);
             }
@@ -72,7 +79,6 @@ const Header = () => {
             setLoading(false);
         }
     };
-    const user = useSelector(state => state.user);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -86,6 +92,18 @@ const Header = () => {
         setSearchQuery(keyword);
         navigate(`/search?q=${encodeURIComponent(keyword)}`);
         setShowSearchPopup(false);
+    };
+
+    const handleLogout = () => {
+        dispatch(logout());
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+        setShowUserDropdown(false);
+    };
+
+    const toggleUserDropdown = () => {
+        setShowUserDropdown(!showUserDropdown);
     };
 
     return (
@@ -120,7 +138,7 @@ const Header = () => {
                     
                     {/* Popup tìm kiếm */}
                     {showSearchPopup && (
-                        <div className="search-popup">
+                        <div className="search-popup" ref={searchRef}>
                             <div className="search-popup-header">
                                 <h3>TÌM KIẾM PHỔ BIẾN</h3>
                                 <button onClick={() => setShowSearchPopup(false)}>
@@ -200,15 +218,42 @@ const Header = () => {
                             {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
                         </Link>
                     </div>
-                </div>
-                {user ? (
-                    <DropDownHeader user={user} />
-                ) : (
-                    <div className="d-flex gap-2">
-                        <Link to="/login" className="auth-button">Đăng nhập</Link>
-                        <Link to="/register" className="auth-button">Đăng ký</Link>
+                    
+                    {/* Thay đổi phần user-auth */}
+                    <div className="user-auth" ref={userDropdownRef}>
+                        {/* Icon người dùng luôn hiển thị */}
+                        <div className="user-avatar-icon" onClick={toggleUserDropdown}>
+                            <FaUserCircle size={24} />
+                        </div>
+                        
+                        {/* Dropdown hiển thị khi click vào icon */}
+                        {showUserDropdown && (
+                            <div className="user-dropdown">
+                                {user ? (
+                                    <div className="dropdown-content">
+                                        <div className="user-info-dropdown">
+                                            <span className="user-name-dropdown">{user.username || "Admin"}</span>
+                                            {/* Thay thế phần dropdown-logout bằng menu đầy đủ */}
+                                            <div className="dropdown-menu">
+                                                <Link to="/profile" className="dropdown-link">Hồ sơ của tôi</Link>
+                                                <Link to="/change-password" className="dropdown-link">Đổi mật khẩu</Link>
+                                                <Link to="/orders" className="dropdown-link">Đơn hàng của tôi</Link>
+                                                <button className="dropdown-logout" onClick={handleLogout}>
+                                                    <FaSignOutAlt size={12} /> Đăng xuất
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="dropdown-content">
+                                        <Link to="/login" className="dropdown-link">Đăng nhập</Link>
+                                        <Link to="/register" className="dropdown-link">Đăng ký</Link>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </header>
     );

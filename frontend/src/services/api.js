@@ -11,10 +11,65 @@ const api = axios.create({
   }
 });
 
+// Interceptor để tự động thêm token vào mỗi request
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
+// Tạo instance axios cho API client
+const clientApi = axios.create({
+  baseURL: API_URL, 
+  headers: {
+    'Content-Type': 'application/json',
+    'x-client-view': 'true'  // Mặc định áp dụng cho tất cả request
+  }
+});
+
+// Cập nhật các interceptors cho instance mới này
+clientApi.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 // Lấy danh sách sản phẩm
-export const fetchProducts = async (params = {}) => {
+export const fetchProducts = async (params) => {
   try {
-    const response = await api.get('/products', { params });
+    console.log('Đang gửi request tới API products với params:', params);
+    
+    // Tạo đối tượng URLSearchParams để debug
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.category_id) queryParams.append('category_id', params.category_id);
+    if (params.brand_id) queryParams.append('brand_id', params.brand_id);
+    if (params.pet_type) queryParams.append('pet_type', params.pet_type);
+    if (params.min_price) queryParams.append('min_price', params.min_price);
+    if (params.max_price) queryParams.append('max_price', params.max_price);
+    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active);
+    
+    console.log('Query URL:', `/products?${queryParams.toString()}`);
+    
+    const response = await clientApi.get('/products', { params });
+    console.log('API response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -25,7 +80,7 @@ export const fetchProducts = async (params = {}) => {
 // Lấy chi tiết sản phẩm theo ID
 export const fetchProductById = async (id) => {
   try {
-    const response = await api.get(`/products/${id}`);
+    const response = await clientApi.get(`/products/${id}`);
     
     // Đảm bảo trả về đúng cấu trúc dữ liệu
     let data = response.data;
@@ -53,7 +108,7 @@ export const fetchProductById = async (id) => {
 // Lấy danh sách thú cưng
 export const fetchPets = async (params = {}) => {
   try {
-    const response = await api.get('/pets', { params });
+    const response = await clientApi.get('/pets', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching pets:', error);
@@ -64,7 +119,7 @@ export const fetchPets = async (params = {}) => {
 // Lấy chi tiết thú cưng theo ID
 export const fetchPetById = async (id) => {
   try {
-    const response = await api.get(`/pets/${id}`);
+    const response = await clientApi.get(`/pets/${id}`);
     // Đảm bảo is_featured luôn là boolean
     return {
       ...response.data,
@@ -79,7 +134,7 @@ export const fetchPetById = async (id) => {
 // Lấy danh sách danh mục
 export const fetchCategories = async (params = {}) => {
   try {
-    const response = await api.get('/categories', { params });
+    const response = await clientApi.get('/categories', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -90,7 +145,7 @@ export const fetchCategories = async (params = {}) => {
 // Lấy danh sách sản phẩm theo danh mục
 export const fetchProductsByCategory = async (categoryId, params = {}) => {
   try {
-    const response = await api.get(`/products`, { 
+    const response = await clientApi.get(`/products`, { 
       params: { 
         ...params,
         category_id: categoryId 
@@ -106,7 +161,7 @@ export const fetchProductsByCategory = async (categoryId, params = {}) => {
 // Tạo đơn hàng mới
 export const createOrder = async (orderData) => {
   try {
-    const response = await api.post('/orders', orderData);
+    const response = await clientApi.post('/orders', orderData);
     return response.data;
   } catch (error) {
     console.error('Error creating order:', error);
@@ -117,7 +172,7 @@ export const createOrder = async (orderData) => {
 // Lấy tất cả các thương hiệu
 export const fetchAllBrands = async (params = {}) => {
   try {
-    const response = await api.get('/brands', { params });
+    const response = await clientApi.get('/brands', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching brands:', error);
@@ -133,7 +188,7 @@ export const fetchFeaturedPets = async (params = {}) => {
     if (params.type) queryParams.append('type', params.type);
     if (params.limit) queryParams.append('limit', params.limit);
     
-    const response = await api.get(`/pets/featured?${queryParams.toString()}`);
+    const response = await clientApi.get(`/pets/featured?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching featured pets:', error);
@@ -149,7 +204,7 @@ export const fetchFeaturedProducts = async (params = {}) => {
     if (params.category_id) queryParams.append('category_id', params.category_id);
     if (params.limit) queryParams.append('limit', params.limit);
     
-    const response = await api.get(`/products/featured?${queryParams.toString()}`);
+    const response = await clientApi.get(`/products/featured?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching featured products:', error);
@@ -164,7 +219,7 @@ export const fetchFeaturedBrands = async (params = {}) => {
     
     if (params.limit) queryParams.append('limit', params.limit);
     
-    const response = await api.get(`/brands/featured?${queryParams.toString()}`);
+    const response = await clientApi.get(`/brands/featured?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching featured brands:', error);
@@ -177,7 +232,7 @@ export const fetchFeaturedSpaServices = async (params = {}) => {
   try {
     const limit = params.limit || 6; // Đã thay đổi từ 4 thành 6
     
-    const response = await api.get(`/spa-services/featured?limit=${limit}`);
+    const response = await clientApi.get(`/spa-services/featured?limit=${limit}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching featured spa services:', error);
@@ -208,7 +263,7 @@ export const fetchSpaServices = async (params = {}) => {
     const url = `/spa-services?${queryParams.toString()}`;
     console.log('API request URL:', url);
     
-    const response = await api.get(url);
+    const response = await clientApi.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching spa services:', error);
@@ -220,7 +275,7 @@ export const fetchSpaServices = async (params = {}) => {
 export const fetchSpaServiceById = async (id) => {
   try {
     // Đảm bảo gọi đúng endpoint
-    const response = await api.get(`/spa-services/${id}`);
+    const response = await clientApi.get(`/spa-services/${id}`);
     
     // Debug để kiểm tra response
     console.log(`Service data for ${id}:`, response.data);
@@ -236,7 +291,7 @@ export const fetchSpaServiceById = async (id) => {
 // Tạo lịch hẹn spa mới
 export const createSpaAppointment = async (bookingData) => {
   try {
-    const response = await api.post('/spa-appointments', bookingData);
+    const response = await clientApi.post('/spa-appointments', bookingData);
     return response;
   } catch (error) {
     console.error('Error creating spa appointment:', error);
@@ -247,7 +302,7 @@ export const createSpaAppointment = async (bookingData) => {
 // Lấy danh sách lịch hẹn spa của người dùng
 export const getUserSpaAppointments = async () => {
   try {
-    const response = await api.get('/spa-appointments');
+    const response = await clientApi.get('/spa-appointments');
     return response.data;
   } catch (error) {
     console.error('Error fetching user spa appointments:', error);
@@ -258,7 +313,7 @@ export const getUserSpaAppointments = async () => {
 // Hủy lịch hẹn spa
 export const cancelSpaAppointment = async (appointmentId) => {
   try {
-    const response = await axios.put(`/api/spa-appointments/${appointmentId}/status`, {
+    const response = await clientApi.put(`/spa-appointments/${appointmentId}/status`, {
       status: 'cancelled'
     });
     return response.data;
@@ -290,7 +345,7 @@ export const rescheduleSpaAppointment = async (appointmentId, { date, time }) =>
       appointment_time: formattedTime
     });
     
-    const response = await api.put(`/spa-appointments/${appointmentId}/reschedule`, {
+    const response = await clientApi.put(`/spa-appointments/${appointmentId}/reschedule`, {
       appointment_date: formattedDate,
       appointment_time: formattedTime
     });
@@ -306,7 +361,7 @@ export const rescheduleSpaAppointment = async (appointmentId, { date, time }) =>
 // Khôi phục lịch hẹn spa
 export const restoreSpaAppointment = async (appointmentId) => {
   try {
-    const response = await axios.put(`/api/spa-appointments/${appointmentId}/restore`);
+    const response = await clientApi.put(`/spa-appointments/${appointmentId}/restore`);
     return response.data;
   } catch (error) {
     console.error('Error restoring appointment:', error);
@@ -317,7 +372,7 @@ export const restoreSpaAppointment = async (appointmentId) => {
 // Lấy chi tiết lịch hẹn spa
 export const getAppointmentDetails = async (appointmentId) => {
   try {
-    const response = await api.get(`/spa-appointments/${appointmentId}`);
+    const response = await clientApi.get(`/spa-appointments/${appointmentId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching spa appointment with id ${appointmentId}:`, error);
@@ -328,7 +383,7 @@ export const getAppointmentDetails = async (appointmentId) => {
 // Gửi đánh giá dịch vụ spa
 export const submitSpaReview = async (appointmentId, reviewData) => {
   try {
-    const response = await api.post(`/spa-reviews/${appointmentId}`, reviewData);
+    const response = await clientApi.post(`/spa-reviews/${appointmentId}`, reviewData);
     return response.data;
   } catch (error) {
     console.error('Error submitting spa review:', error);
@@ -339,7 +394,7 @@ export const submitSpaReview = async (appointmentId, reviewData) => {
 // Thêm các hàm API cho xác thực email và đặt lịch spa
 export const sendVerificationCode = async (email) => {
   try {
-    const response = await api.post('/verification/send-code', { email });
+    const response = await clientApi.post('/verification/send-code', { email });
     return response.data;
   } catch (error) {
     console.error('Error sending verification code:', error);
@@ -349,7 +404,7 @@ export const sendVerificationCode = async (email) => {
 
 export const verifyEmailCode = async (email, code) => {
   try {
-    const response = await api.post('/verification/verify-code', { 
+    const response = await clientApi.post('/verification/verify-code', { 
       email, 
       code 
     });
@@ -363,7 +418,7 @@ export const verifyEmailCode = async (email, code) => {
 // Thêm API kiểm tra khả dụng khung giờ
 export const fetchTimeSlotAvailability = async (date) => {
   try {
-    const response = await api.get(`/spa-appointments/availability?date=${date}`);
+    const response = await clientApi.get(`/spa-appointments/availability?date=${date}`);
     return response.data;
   } catch (error) {
     console.error('Error checking time slot availability:', error);
@@ -383,7 +438,7 @@ export const fetchBreeds = async (type = '') => {
       url += `?type=${type}`;
     }
     
-    const response = await axios.get(url);
+    const response = await clientApi.get(url);
     
     // Log kết quả trả về
     console.log('Breeds API response:', response.data);
@@ -399,7 +454,7 @@ export const fetchBreeds = async (type = '') => {
 // Hàm tìm kiếm lịch hẹn
 export const searchAppointments = async (searchData) => {
   try {
-    const response = await api.get('/spa-appointments/search', { params: searchData });
+    const response = await clientApi.get('/spa-appointments/search', { params: searchData });
     
     // Thêm logic xử lý dữ liệu
     if (response.data.success && Array.isArray(response.data.data)) {
@@ -440,7 +495,7 @@ export const searchAppointments = async (searchData) => {
 export const fetchSpaTimeSlotAvailability = async (date) => {
   try {
     console.log('Calling availability API with date:', date);
-    const response = await axios.get(`/api/spa-time-slots/availability?date=${date}`);
+    const response = await clientApi.get(`/spa-time-slots/availability?date=${date}`);
     return response.data;
   } catch (error) {
     console.error('Error checking time slot availability:', error);
@@ -456,7 +511,7 @@ export const createSpaPayment = async (appointmentId, paymentData) => {
       paymentData.payment_method = 'cash'; // Giá trị mặc định
     }
     
-    const response = await api.post(`/payments/appointments/${appointmentId}/payments`, paymentData);
+    const response = await clientApi.post(`/payments/appointments/${appointmentId}/payments`, paymentData);
     return response.data;
   } catch (error) {
     console.error('Error creating payment:', error);
@@ -467,7 +522,7 @@ export const createSpaPayment = async (appointmentId, paymentData) => {
 // Lấy lịch sử thanh toán cho lịch hẹn
 export const getPaymentHistory = async (appointmentId) => {
   try {
-    const response = await api.get(`/payments/appointments/${appointmentId}/payments`);
+    const response = await clientApi.get(`/payments/appointments/${appointmentId}/payments`);
     return response.data;
   } catch (error) {
     console.error('Error fetching payment history:', error);
@@ -487,7 +542,7 @@ export const createVnPayUrl = async (appointmentId, amount, redirectUrl, bankCod
     // Đảm bảo URL chuyển hướng là về frontend
     const returnUrl = `${window.location.origin}/payment/callback`;
     
-    const response = await axios.post(`/api/vnpay/create-payment-url`, {
+    const response = await clientApi.post(`/vnpay/create-payment-url`, {
       appointment_id: appointmentId,
       amount: amount,
       redirect_url: returnUrl,  // Về trang frontend
@@ -510,7 +565,7 @@ export const confirmVnpayPayment = async (queryParams) => {
     const params = new URLSearchParams(queryParams);
     
     // Sử dụng API endpoint đúng - có thể dùng api instance đã được cấu hình
-    const response = await api.get(`/vnpay/callback?${params.toString()}`);
+    const response = await clientApi.get(`/vnpay/callback?${params.toString()}`);
     
     console.log("VNPay confirmation response:", response.data);
     return response.data;
@@ -523,7 +578,7 @@ export const confirmVnpayPayment = async (queryParams) => {
 // Đổi phương thức thanh toán cho lịch hẹn
 export const changePaymentMethod = async (appointmentId, newPaymentMethod, transactionId = null) => {
   try {
-    const response = await api.put(`/payments/appointments/${appointmentId}/payment-method`, {
+    const response = await clientApi.put(`/payments/appointments/${appointmentId}/payment-method`, {
       new_payment_method: newPaymentMethod,
       transaction_id: transactionId
     });
@@ -548,10 +603,81 @@ export const searchAll = async (query, params = {}) => {
     if (params.type) queryParams.append('type', params.type);
     if (params.featured) queryParams.append('featured', params.featured);
     
-    const response = await api.get(`/search?${queryParams.toString()}`);
+    const response = await clientApi.get(`/search?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error searching:', error);
+    throw error;
+  }
+};
+
+// Thêm các phương thức API cho quên mật khẩu
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await clientApi.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    throw error;
+  }
+};
+
+export const verifyResetToken = async (token) => {
+  try {
+    const response = await clientApi.get(`/auth/reset-password/${token}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying reset token:', error);
+    throw error;
+  }
+};
+
+export const resetPassword = async (token, password) => {
+  try {
+    const response = await clientApi.post(`/auth/reset-password/${token}`, { password });
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw error;
+  }
+};
+
+// Thêm API đổi mật khẩu
+export const changePassword = async (userId, passwordData) => {
+  try {
+    const response = await clientApi.put(`/users/${userId}/change-password`, passwordData);
+    return response.data;
+  } catch (error) {
+    console.error('Error changing password:', error);
+    throw error;
+  }
+};
+
+// Sửa hàm fetchRelatedSpaServices
+export const fetchRelatedSpaServices = async (serviceId, limit = 4) => {
+  try {
+    console.log(`Fetching related services for ${serviceId} with limit ${limit}`);
+    const response = await clientApi.get(`/spa-services/related/${serviceId}`, {
+      params: { limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching related spa services:', error);
+    return { data: [] };
+  }
+};
+
+// Thêm sessionId vào tham số
+export const sendChatbotMessage = async (message, sessionId) => {
+  try {
+    const response = await clientApi.post('/chatbot/chat', { 
+      message,
+      sessionId 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending message to chatbot:', error);
     throw error;
   }
 };

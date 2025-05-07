@@ -68,15 +68,23 @@ const ProductsPage = () => {
         sort_order = 'asc';
       }
       
-      const response = await fetchProducts({
+      // Create request parameters object
+      const requestParams = {
         page: currentPage,
         pageSize,
         searchTerm,
-        category_id: categoryFilter === 'featured' ? null : categoryFilter, 
-        is_featured: categoryFilter === 'featured' ? true : null,
         sort_by,
         sort_order
-      });
+      };
+      
+      // Handle category filter and featured status separately
+      if (categoryFilter === 'featured') {
+        requestParams.is_featured = true;
+      } else if (categoryFilter) {
+        requestParams.category_id = categoryFilter;
+      }
+      
+      const response = await fetchProducts(requestParams);
       setProducts(response.data);
       setTotalPages(response.totalPages);
     } catch (error) {

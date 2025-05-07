@@ -225,7 +225,9 @@
   justify-content: center;
   height: 40px;
   gap: 8px;
-  width: 200px;
+  width: auto; /* Thay đổi từ cố định 200px thành auto */
+  min-width: 240px; /* Thêm min-width để đảm bảo nút không quá nhỏ */
+  white-space: nowrap; /* Thêm thuộc tính này để ngăn văn bản xuống dòng */
 }
 
 .contact-button:hover {

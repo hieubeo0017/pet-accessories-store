@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch } from "react-redux";
+import { toast } from 'react-toastify';
+import { setUser } from '../store/userSlice';
 import authService from '../services/auth';
 import './LoginPage.css';
-import {useDispatch} from "react-redux";
-import { setUser } from '../store/userSlice';
-
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -12,9 +12,9 @@ const LoginPage = () => {
         password: ''
     });
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,15 +27,30 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
             const response = await authService.login(formData);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            dispatch(setUser(response.user));
-            navigate('/');
+            
+            // Lưu thông tin người dùng vào localStorage và Redux store
+            if (response.user) {
+                localStorage.setItem('user', JSON.stringify(response.user));
+                dispatch(setUser(response.user));
+                
+                // Thông báo đăng nhập thành công
+                toast.success('Đăng nhập thành công!');
+                
+                // Chuyển hướng đến trang chính
+                navigate('/');
+            } else {
+                setError('Đăng nhập thành công nhưng không nhận được thông tin người dùng');
+            }
         } catch (err) {
-            setError('Email hoặc mật khẩu không chính xác');
+            console.error('Login error:', err);
+            setError(err.message || 'Email hoặc mật khẩu không chính xác');
+            toast.error('Đăng nhập thất bại');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -72,8 +87,8 @@ const LoginPage = () => {
                         />
                     </div>
 
-                    <button type="submit" className="login-button">
-                        Đăng nhập
+                    <button type="submit" className="login-button" disabled={loading}>
+                        {loading ? 'Đang xử lý...' : 'Đăng nhập'}
                     </button>
                 </form>
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchPetById, fetchPets } from '../services/api';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../store/cartSlice';
-import { FaPaw, FaBirthdayCake, FaRuler, FaWeightHanging, FaShieldAlt, FaCheck } from 'react-icons/fa';
+import { FaPaw, FaBirthdayCake, FaRuler, FaWeightHanging, FaShieldAlt, FaCheck, FaShoppingCart } from 'react-icons/fa';
 import ReviewSection from '../components/reviews/ReviewSection';
 import PetCard from '../components/pets/PetCard';
 import './PetDetailPage.css';
@@ -11,6 +11,7 @@ import './PetDetailPage.css';
 const PetDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   
   const [pet, setPet] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -107,6 +108,25 @@ const PetDetailPage = () => {
     }
   };
   
+  const handleBuyNow = () => {
+    if (pet && !pet.is_adopted && pet.stock > 0) {
+      const primaryImage = pet.images?.find(img => img.is_primary === true) || pet.images?.[0];
+      
+      dispatch(addItem({
+        id: pet.id,
+        name: pet.name,
+        price: pet.price,
+        image: primaryImage?.image_url || '',
+        quantity,
+        type: 'pet'
+      }));
+      
+      // Điều hướng đến trang giỏ hàng và cuộn lên đầu
+      navigate('/cart');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
   if (loading) return <div className="loading">Đang tải...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!pet) return <div className="error">Không tìm thấy thú cưng</div>;
@@ -198,12 +218,20 @@ const PetDetailPage = () => {
               <span>{quantity}</span>
               <button onClick={increaseQuantity}>+</button>
             </div>
-            <button 
-              className="contact-button" 
-              onClick={handleAddToCart}
-            >
-              Đặt Mua
-            </button>
+            <div className="purchase-buttons">
+              <button 
+                className="contact-button"
+                onClick={handleBuyNow}
+              >
+                Đặt Mua
+              </button>
+              <button 
+                className="add-cart-button" 
+                onClick={handleAddToCart}
+              >
+                <FaShoppingCart /> Thêm vào giỏ
+              </button>
+            </div>
           </div>
         )}
         

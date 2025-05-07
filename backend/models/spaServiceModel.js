@@ -519,6 +519,66 @@ const getServicesByAppointmentId = async (appointmentId) => {
   }
 };
 
+/**
+ * Lấy danh sách dịch vụ liên quan
+ * @param {Object} options - Các tùy chọn để lấy dịch vụ liên quan
+ * @returns {Array} - Danh sách dịch vụ liên quan
+ */
+const getRelatedServices = async (options) => {
+  try {
+    const { currentId, petType, petSize, limit = 4 } = options;
+    
+    const pool = await connectDB();
+    
+    // Lấy các dịch vụ liên quan dựa trên loại thú cưng và kích thước
+    const result = await pool.request()
+      .input('currentId', sql.VarChar, currentId)
+      .input('petType', sql.VarChar, petType)
+      .input('petSize', sql.VarChar, petSize)
+      .input('limit', sql.Int, limit)
+      .query(`
+        SELECT TOP (@limit)
+          id, name, description, price, duration,
+          pet_type, pet_size, is_active, is_featured
+        FROM spa_services
+        WHERE is_active = 1
+          AND id != @currentId
+          AND (
+            (pet_type = @petType OR pet_type = 'all')
+            OR
+            (pet_size = @petSize OR pet_size = 'all')
+          )
+        ORDER BY 
+          CASE WHEN pet_type = @petType THEN 1 ELSE 2 END,
+          CASE WHEN is_featured = 1 THEN 1 ELSE 2 END,
+          price DESC
+      `);
+    
+    // Lấy hình ảnh cho từng dịch vụ
+    const services = result.recordset;
+    for (const service of services) {
+      // Lấy hình ảnh chính cho dịch vụ
+      const imagesResult = await pool.request()
+        .input('serviceId', service.id)
+        .query(`
+          SELECT TOP 1 image_url 
+          FROM spa_service_images
+          WHERE service_id = @serviceId
+          ORDER BY is_primary DESC, display_order ASC
+        `);
+      
+      service.image_url = imagesResult.recordset.length > 0 
+        ? imagesResult.recordset[0].image_url 
+        : null;
+    }
+    
+    return services;
+  } catch (error) {
+    console.error('Error getting related spa services:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAllSpaServices,
   getSpaServiceById,
@@ -526,5 +586,6 @@ module.exports = {
   updateSpaService,
   deleteSpaService,
   getFeaturedSpaServices,
-  getServicesByAppointmentId
+  getServicesByAppointmentId,
+  getRelatedServices
 };

@@ -81,18 +81,22 @@ const spaPaymentController = {
         appointment_id,
         amount: paymentData.amount,
         payment_method: paymentData.payment_method,
-        transaction_id: paymentData.transaction_id,
-        notes: paymentData.notes,
-        update_appointment_status: paymentData.amount >= appointment.total_amount
+        transaction_id: paymentData.transaction_id || null,
+        status: paymentData.status || 'pending',
+        notes: paymentData.notes || null,
+        // Quan trọng: Chỉ cập nhật trạng thái thanh toán của lịch hẹn nếu KHÔNG phải tiền mặt
+        update_appointment_status: paymentData.payment_method !== 'cash'
       });
       
       // Cập nhật trạng thái lịch hẹn dựa vào phương thức thanh toán và số tiền
       if (parseFloat(paymentData.amount) >= parseFloat(appointment.total_amount)) {
         if (paymentData.payment_method === 'cash') {
-          // Tiền mặt - vẫn giữ trạng thái "pending" (chờ xác nhận)
-          console.log(`Thanh toán tiền mặt đủ cho lịch hẹn ${appointment_id}, giữ trạng thái chờ xác nhận`);
+          // Tiền mặt - đặt trạng thái thanh toán là pending
+          console.log(`Thanh toán tiền mặt đủ cho lịch hẹn ${appointment_id}, đặt trạng thái thanh toán là pending`);
+          await spaAppointmentModel.updatePaymentStatus(appointment_id, 'pending');
         } else {
-          // Các phương thức thanh toán online - đổi thành "confirmed" (đã xác nhận)
+          // Các phương thức thanh toán online - đặt trạng thái thanh toán là paid và trạng thái lịch hẹn là confirmed
+          await spaAppointmentModel.updatePaymentStatus(appointment_id, 'paid');
           await spaAppointmentModel.updateStatus(appointment_id, 'confirmed');
           console.log(`Đã tự động cập nhật trạng thái lịch hẹn ${appointment_id} thành 'confirmed' sau khi thanh toán online đủ`);
         }
@@ -103,7 +107,7 @@ const spaPaymentController = {
       
       res.json({
         success: true,
-        message: 'Thanh toán thành công',
+        message: paymentData.payment_method === 'cash' ? 'Đã ghi nhận phương thức thanh toán tại quầy' : 'Thanh toán thành công',
         data: {
           payment_id: payment.id,
           appointment: updatedAppointment
@@ -251,16 +255,9 @@ const spaPaymentController = {
       // Cập nhật phương thức thanh toán trong bảng appointments
       await spaAppointmentModel.updatePaymentMethod(appointment_id, new_payment_method);
 
-      // Cập nhật payment_status thành paid nếu chuyển sang VNPAY
+      // Chỉ cập nhật phương thức thanh toán, không cập nhật trạng thái
       if (new_payment_method === 'vnpay') {
-        console.log(`Cập nhật trạng thái thanh toán của lịch hẹn ${appointment_id} thành paid khi chuyển sang VNPAY`);
-        await spaAppointmentModel.updatePaymentStatus(appointment_id, 'paid');
-        
-        // THÊM MỚI: Cập nhật thêm trạng thái lịch hẹn thành confirmed
-        if (appointment.status !== 'completed' && appointment.status !== 'cancelled') {
-          await spaAppointmentModel.updateStatus(appointment_id, 'confirmed');
-          console.log(`Đã cập nhật trạng thái lịch hẹn ${appointment_id} thành 'confirmed'`);
-        }
+        console.log(`Đã chuyển phương thức thanh toán của lịch hẹn ${appointment_id} sang VNPAY, đang chờ thanh toán`);
       }
 
       // Tìm bản ghi thanh toán gần nhất để cập nhật
@@ -269,8 +266,19 @@ const spaPaymentController = {
       if (latestPayment) {
         // Cập nhật phương thức thanh toán của bản ghi hiện có
         const notes = `Đổi phương thức thanh toán từ ${oldPaymentMethod} sang ${new_payment_method}`;
-        await spaPaymentModel.updatePaymentMethod(latestPayment.id, dbPaymentMethod, notes);
-        console.log(`Đã cập nhật phương thức thanh toán của bản ghi ${latestPayment.id} thành ${dbPaymentMethod}`);
+        
+        if (new_payment_method === 'vnpay') {
+          await spaPaymentModel.updatePaymentMethodAndStatus(
+            latestPayment.id, 
+            dbPaymentMethod, 
+            'pending',  // Thay 'completed' thành 'pending'
+            notes
+          );
+          console.log(`Đã cập nhật phương thức thanh toán của bản ghi ${latestPayment.id} thành ${dbPaymentMethod} và trạng thái thành pending`);
+        } else {
+          await spaPaymentModel.updatePaymentMethod(latestPayment.id, dbPaymentMethod, notes);
+          console.log(`Đã cập nhật phương thức thanh toán của bản ghi ${latestPayment.id} thành ${dbPaymentMethod}`);
+        }
       } else {
         // Nếu không tìm thấy bản ghi thanh toán, tạo mới
         await spaPaymentModel.create({
@@ -278,7 +286,7 @@ const spaPaymentController = {
           amount: parseFloat(appointment.total_amount),
           payment_method: dbPaymentMethod,
           transaction_id: transaction_id || null,
-          status: 'completed',
+          status: 'pending', // Thay vì status theo phương thức
           notes: `Đổi phương thức thanh toán từ ${oldPaymentMethod} sang ${new_payment_method}`,
           update_appointment_status: false
         });

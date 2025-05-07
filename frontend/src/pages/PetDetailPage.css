@@ -148,6 +148,7 @@
   justify-content: center;
   height: 40px;
   width: 200px;
+  flex: 1;
 }
 
 .contact-button:hover {
@@ -329,6 +330,17 @@
     width: 100%;
     justify-content: space-between;
   }
+  
+  .purchase-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .add-cart-button,
+  .contact-button {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* Thêm vào cuối file CSS hiện có */
@@ -383,6 +395,36 @@
   color: var(--primary-color);
   font-size: 14px;
   flex-shrink: 0;
+}
+
+/* Style cho phần nút mua hàng */
+.purchase-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.add-cart-button {
+  padding: 14px 20px;
+  background-color: white;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 16px;
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  flex: 1;
+}
+
+.add-cart-button:hover {
+  background-color: #f0f7ff;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 992px) {

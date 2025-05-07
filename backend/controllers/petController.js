@@ -6,22 +6,33 @@ exports.getAllPets = async (req, res) => {
     // Lấy các tham số từ query
     const { 
       search, page, limit, type, breed, gender, min_price, 
-      max_price, is_adopted, is_active, category_id, sort_by, sort_order 
+      max_price, is_adopted, is_active, is_featured, category_id, sort_by, sort_order 
     } = req.query;
     
     // Chuyển đổi is_adopted và is_active từ chuỗi sang boolean nếu có
-    let adoptedFilter, activeFilter;
+    let adoptedFilter, activeFilter, featuredFilter;
     
     if (is_adopted !== undefined) {
       adoptedFilter = is_adopted === 'true' || is_adopted === '1';
     }
     
-    // Chỉ khi tham số is_active được gửi lên, mới thiết lập giá trị cho activeFilter
-    if (is_active !== undefined) {
+    // Xác định nếu request đến từ client
+    const isClientRequest = req.headers['x-client-view'] === 'true';
+    
+    // Đặt is_active = true nếu request từ client, nếu không thì sử dụng giá trị từ query
+    if (isClientRequest) {
+      activeFilter = true;
+    } else if (is_active !== undefined) {
       activeFilter = is_active === 'true' || is_active === '1';
     } else {
-      // Nếu không có tham số is_active, activeFilter = undefined để lấy tất cả
+      // Nếu không có tham số is_active và không phải client request, 
+      // activeFilter = undefined để lấy tất cả
       activeFilter = undefined;
+    }
+    
+    // Thêm xử lý cho is_featured
+    if (is_featured !== undefined) {
+      featuredFilter = is_featured === 'true' || is_featured === '1';
     }
     
     // Lấy danh sách thú cưng với bộ lọc
@@ -35,7 +46,8 @@ exports.getAllPets = async (req, res) => {
       min_price,
       max_price,
       is_adopted: adoptedFilter,
-      is_active: activeFilter,
+      is_active: activeFilter, // Đã thay đổi
+      is_featured: featuredFilter,
       category_id,
       sortBy: sort_by,
       sortOrder: sort_order
@@ -55,6 +67,12 @@ exports.getPetById = async (req, res) => {
     
     if (!pet) {
       return res.status(404).json({ message: 'Không tìm thấy thú cưng' });
+    }
+    
+    // Kiểm tra nếu là request từ client và thú cưng không active
+    const isClientRequest = req.headers['x-client-view'] === 'true';
+    if (isClientRequest && !pet.is_active) {
+      return res.status(404).json({ message: 'Thú cưng này hiện không còn bán' });
     }
     
     res.json(pet);
@@ -188,9 +206,11 @@ exports.getFeaturedPets = async (req, res) => {
   try {
     const { type, limit = 4 } = req.query;
     
+    // Thêm điều kiện is_active = true cho getFeatured
     const featuredPets = await petModel.getFeatured({
       type,
-      limit
+      limit,
+      is_active: true // Đảm bảo chỉ trả về thú cưng đang active
     });
     
     res.json({

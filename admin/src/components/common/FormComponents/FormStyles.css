@@ -278,3 +278,34 @@ select.form-control {
     grid-template-columns: 1fr;
   }
 }
+
+/* Password input container */
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-container input {
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: #6c757d;
+}
+
+.password-toggle-btn:hover {
+  color: #495057;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+}

@@ -17,6 +17,13 @@ router.get('/', spaServiceController.getAllSpaServices);
 router.get('/featured', spaServiceController.getFeaturedSpaServices);
 
 /**
+ * @route   GET /api/spa-services/related/:id
+ * @desc    Lấy danh sách dịch vụ spa liên quan
+ * @access  Public
+ */
+router.get('/related/:id', spaServiceController.getRelatedServices);
+
+/**
  * @route   GET /api/spa-services/:id
  * @desc    Lấy chi tiết dịch vụ spa theo ID
  * @access  Public

@@ -48,7 +48,7 @@ const LatestBlog = () => {
                 ))}
             </div>
             <div className="view-more">
-                <Link to="/blog" className="view-more-btn">Xem tất cả bài viết</Link>
+                <Link to="/blogs" className="view-more-btn">Xem tất cả bài viết</Link>
             </div>
         </section>
     );

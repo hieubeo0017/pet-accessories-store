@@ -11,25 +11,37 @@ const productController = {
         page = 1, 
         limit = 10, 
         category_id,
+        category_type, // Thêm tham số này
         brand_id,
         pet_type,
         min_price,
         max_price,
         is_active,
+        is_featured,
         sort_by = 'id',
         sort_order = 'desc'
       } = req.query;
+      
+      // Xác định nếu request đến từ client
+      const isClientRequest = req.headers['x-client-view'] === 'true';
+      
+      // Xử lý category_id nếu là danh sách được phân tách bằng dấu phẩy
+      const categoryIds = category_id ? category_id.split(',') : undefined;
       
       const options = {
         search,
         page: parseInt(page),
         limit: parseInt(limit),
+        category_ids: categoryIds,
         category_id,
+        category_type, // Thêm tham số mới vào options
         brand_id,
         pet_type,
         min_price: min_price ? parseFloat(min_price) : undefined,
         max_price: max_price ? parseFloat(max_price) : undefined,
-        is_active: is_active !== undefined ? is_active === 'true' : undefined,
+        is_active: isClientRequest ? true : (is_active !== undefined ? is_active === 'true' : undefined),
+        is_featured: is_featured === 'true' || is_featured === true ? true : 
+                     is_featured === 'false' || is_featured === false ? false : undefined,
         sortBy: sort_by,
         sortOrder: sort_order
       };

@@ -42,8 +42,15 @@ const SpaAppointmentsPage = () => {
         sort_order: 'desc'
       };
 
-      if (searchTerm) {
-        params.search = searchTerm;
+      if (searchTerm && searchTerm.trim() !== '') {
+        // Xử lý searchTerm để tìm kiếm được chính xác hơn
+        params.search = searchTerm.trim();
+        
+        // Kiểm tra nếu searchTerm chứa chỉ số, có thể là số điện thoại
+        // Loại bỏ các ký tự không phải số nếu người dùng nhập số điện thoại có dấu cách
+        if (/^\d[\d\s-]*$/.test(searchTerm)) {
+          params.search = searchTerm.replace(/\D/g, '');
+        }
       }
 
       if (statusFilter !== 'all') {
@@ -165,6 +172,12 @@ const SpaAppointmentsPage = () => {
     }
   };
   
+  const handleSearch = (value) => {
+    // Đặt lại trang về 1 khi thực hiện tìm kiếm mới
+    setCurrentPage(1);
+    setSearchTerm(value);
+  };
+
   const columns = [
     { 
       header: 'ID', 
@@ -285,7 +298,7 @@ const SpaAppointmentsPage = () => {
           <SearchBar 
             placeholder="Tìm theo tên khách hàng, điện thoại..." 
             value={searchTerm}
-            onChange={setSearchTerm}
+            onChange={handleSearch}
           />
           
           <div className="filter-control">

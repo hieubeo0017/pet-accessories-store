@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/common/PageHeader';
 import { toast } from 'react-toastify';
-import blogService from '../../services/blogService';
 import userService from '../../services/userService';
 import UserForm from "../../components/users/UserForm";
-
 
 const EditUserPage = () => {
     const { id } = useParams();
@@ -18,10 +16,10 @@ const EditUserPage = () => {
     useEffect(() => {
         const loadUser = async () => {
             try {
-                const data = await userService.fetchUserById(id);
-                setUser(data);
+                const userData = await userService.fetchUserById(id);
+                setUser(userData);
             } catch (error) {
-                console.error('Error loading brand:', error);
+                console.error('Error loading user:', error);
                 setError('Không thể tải thông tin người dùng');
                 toast.error('Không thể tải thông tin người dùng');
             } finally {
@@ -41,7 +39,7 @@ const EditUserPage = () => {
             toast.success('Cập nhật người dùng thành công!');
             navigate('/users');
         } catch (error) {
-            console.error('Error updating brand:', error);
+            console.error('Error updating user:', error);
             setError(error.message || 'Có lỗi xảy ra khi cập nhật người dùng');
             toast.error(error.message || 'Có lỗi xảy ra khi cập nhật người dùng');
         } finally {
@@ -58,7 +56,7 @@ const EditUserPage = () => {
     }
 
     return (
-        <div className="edit-brand-page page">
+        <div className="edit-user-page page">
             <PageHeader title={`Chỉnh sửa người dùng: ${user.username}`} />
 
             {error && <div className="error-message">{error}</div>}
@@ -71,7 +69,7 @@ const EditUserPage = () => {
                     onSubmit={handleSubmit}
                     submitButtonText="Cập nhật người dùng"
                     condition={{
-                        hidden_required_password: true,
+                        hidden_required_password: false,
                     }}
                 />
             )}

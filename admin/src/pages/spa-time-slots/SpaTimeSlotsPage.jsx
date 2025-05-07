@@ -82,8 +82,18 @@ const SpaTimeSlotsPage = () => {
         params.is_active = statusFilter === 'active';
       }
       
-      if (searchTerm) {
-        params.search = searchTerm;
+      // Thêm searchTerm với xử lý chuẩn hơn
+      if (searchTerm && searchTerm.trim() !== '') {
+        const timeRegex = /^([0-9][0-9]):([0-5][0-9])$/;
+        if (timeRegex.test(searchTerm)) {
+          // Đặt đúng định dạng để tìm kiếm thời gian
+          params.search = searchTerm;
+          console.log('Đang tìm kiếm với khung giờ:', params.search);
+        } else {
+          // Tìm kiếm thông thường
+          params.search = searchTerm.trim();
+          console.log('Đang tìm kiếm với từ khóa:', params.search);
+        }
       }
       
       const result = await fetchTimeSlotsWithPagination(params);
@@ -188,6 +198,29 @@ const SpaTimeSlotsPage = () => {
     return timeMap[timeKey] || timeKey; // Trả về giá trị đã map hoặc giữ nguyên nếu không tìm thấy
   };
   
+  // Thêm hàm xử lý tìm kiếm riêng biệt - cải tiến
+  const handleSearch = (value) => {
+    // Reset về trang 1 khi thực hiện tìm kiếm mới
+    setCurrentPage(1);
+    
+    // Xử lý đặc biệt cho định dạng thời gian
+    let searchValue = value.trim();
+    
+    // Kiểm tra nếu đang tìm theo định dạng thời gian (HH:MM hoặc H:MM)
+    const timeRegex = /^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/;
+    if (timeRegex.test(searchValue)) {
+      // Định dạng lại để đảm bảo có dạng HH:MM
+      const parts = searchValue.split(':');
+      const hours = parts[0].padStart(2, '0');
+      const minutes = parts[1];
+      searchValue = `${hours}:${minutes}`;
+      
+      console.log('Đang tìm kiếm theo khung giờ:', searchValue);
+    }
+    
+    setSearchTerm(searchValue);
+  };
+
   // Định nghĩa cấu trúc cột cho bảng
   const columns = [
     {
@@ -258,7 +291,7 @@ const SpaTimeSlotsPage = () => {
           <SearchBar
             placeholder="Tìm kiếm khung giờ..."
             value={searchTerm}
-            onChange={setSearchTerm}
+            onChange={handleSearch} // Sử dụng hàm xử lý mới
           />
           
           <div className="filter-group">

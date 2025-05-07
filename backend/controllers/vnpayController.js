@@ -158,32 +158,28 @@ const vnpayController = {
           
           let paymentResult;
           
-          // Nếu đã có bản ghi thanh toán e-wallet và chưa có transaction_id
+          // Nếu đã có bản ghi thanh toán e-wallet và chưa có transaction_id hoặc có status là 'pending'
           if (latestEwalletPayment && 
               latestEwalletPayment.payment_method === 'e-wallet' && 
-              (!latestEwalletPayment.transaction_id || latestEwalletPayment.transaction_id === 'undefined')) {
+              (latestEwalletPayment.status === 'pending' || !latestEwalletPayment.transaction_id || latestEwalletPayment.transaction_id === 'undefined')) {
             
-           
-            
-            // Cập nhật transaction_id cho bản ghi hiện có
-            const updateResult = await spaPaymentModel.updateTransactionId(
+            // Cập nhật transaction_id và status cho bản ghi hiện có
+            const updateResult = await spaPaymentModel.updateTransactionAndStatus(
               latestEwalletPayment.id, 
-              vnp_TransactionNo
+              vnp_TransactionNo,
+              'completed' // Đổi status thành completed
             );
             
             if (updateResult.success) {
-             
               paymentResult = { 
                 success: true, 
                 id: latestEwalletPayment.id 
               };
             } else {
-              
+              // Xử lý lỗi nếu cần
             }
           } else {
-          
-            
-            // Tạo bản ghi thanh toán mới
+            // Chỉ tạo bản ghi mới nếu không tìm thấy bản ghi phù hợp
             paymentResult = await spaPaymentModel.create({
               appointment_id: appointmentId,
               amount: vnp_Amount,

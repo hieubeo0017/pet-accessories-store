@@ -25,6 +25,12 @@ const UsersPage = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
 
+    // Thêm hàm normalizeText vào đầu component
+    const normalizeText = (text) => {
+        if (typeof text !== 'string') return text;
+        return text.normalize('NFC');
+    };
+
     // Debounce cho tìm kiếm
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -76,15 +82,48 @@ const UsersPage = () => {
     };
 
     const columns = [
-        { header: 'ID', accessor: 'id' },
-        { header: 'Tên người dùng', accessor: 'username' },
-        { header: 'email', accessor: 'email' },
-        { header: 'Họ và tên', accessor: 'full_name' },
-        { header: 'Số điện thoại', accessor: 'phone_number' },
-        { header: 'Địa chỉ', accessor: 'address' },
+        { 
+            header: 'ID', 
+            accessor: 'id',
+            style: { whiteSpace: 'nowrap', maxWidth: '50px' }  // Giảm xuống từ 60px
+        },
+        { 
+            header: 'Tên người dùng', 
+            accessor: 'username',
+            style: { whiteSpace: 'nowrap', maxWidth: '130px' }, // Giảm xuống từ 150px
+            cell: (row) => normalizeText(row.username)
+        },
+        { 
+            header: 'Email', 
+            accessor: 'email',
+            style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' } // Giảm từ 180px
+        },
+        { 
+            header: 'Họ và tên', 
+            accessor: 'full_name',
+            style: { whiteSpace: 'nowrap', maxWidth: '250px' }, // Tăng từ 200px lên 250px
+            cell: (row) => normalizeText(row.full_name)
+        },
+        { 
+            header: 'Số điện thoại', 
+            accessor: 'phone_number',
+            style: { whiteSpace: 'nowrap', maxWidth: '110px' }  // Giảm từ 130px
+        },
+        { 
+            header: 'Vai trò', 
+            accessor: 'role',
+            style: { whiteSpace: 'nowrap', maxWidth: '80px' },  // Giảm từ 100px
+            cell: (row) => (
+                <span className={`role-badge ${row.role?.toLowerCase() || 'user'}`}>
+                    {row.role || 'User'}
+                </span>
+            )
+        },
+        // Thao tác giữ nguyên
         {
             header: 'Thao tác',
             accessor: 'actions',
+            style: { whiteSpace: 'nowrap', width: '120px' },
             cell: (row) => (
                 <div className="action-buttons">
                     <button
@@ -109,8 +148,54 @@ const UsersPage = () => {
         }
     ];
 
+    const tableStyles = `
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+      
+      table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+      }
+      
+      th, td {
+        padding: 12px 15px;
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .role-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      
+      .role-badge.admin {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      
+      .role-badge.user {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      
+      .role-badge.editor {
+        background-color: #d4edda;
+        color: #155724;
+      }
+    `;
+
     return (
         <div className="brand-management page">
+            <style>{tableStyles}</style>
             <div className="page-header">
                 <h1>Quản lý người dùng</h1>
                 <Link to="/users/add" className="btn-add">

@@ -75,6 +75,24 @@ const BlogsPage = () => {
         setShowDetailModal(true);
     };
 
+    // Thêm hàm xử lý trạng thái nổi bật
+    const handleToggleFeatured = async (blog) => {
+        try {
+            const newFeaturedStatus = !blog.is_featured;
+            await blogService.toggleFeatured(blog.id, newFeaturedStatus);
+            
+            // Cập nhật danh sách blog
+            setBlogs(prevBlogs => prevBlogs.map(item => 
+                item.id === blog.id ? {...item, is_featured: newFeaturedStatus} : item
+            ));
+            
+            toast.success(`Bài viết đã ${newFeaturedStatus ? 'được đặt' : 'bỏ'} làm nổi bật`);
+        } catch (error) {
+            console.error('Error toggling featured status:', error);
+            toast.error(error.message || 'Không thể cập nhật trạng thái nổi bật');
+        }
+    };
+
     const columns = [
         { header: 'ID', accessor: 'id' },
         { header: 'Tên bài viết', accessor: 'title' },
@@ -111,6 +129,13 @@ const BlogsPage = () => {
                     <Link to={`/blogs/edit/${row.id}`} className="btn-edit" title="Chỉnh sửa">
                         <i className="fas fa-edit"></i>
                     </Link>
+                    <button
+                        className={`btn-feature ${row.is_featured ? 'active' : ''}`}
+                        onClick={() => handleToggleFeatured(row)}
+                        title={row.is_featured ? "Bỏ nổi bật" : "Đặt làm nổi bật"}
+                    >
+                        <i className="fas fa-star"></i>
+                    </button>
                     <button
                         className="btn-delete"
                         onClick={() => handleDeleteClick(row)}

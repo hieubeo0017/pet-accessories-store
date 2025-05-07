@@ -187,6 +187,11 @@ const FoodPage = () => {
         });
     };
 
+    // Thêm useEffect để cuộn lên đầu trang khi component được mount
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     return (
         <div className="food-page">
             <div className="page-header">

@@ -14,16 +14,42 @@ const userModel = {
             throw error;
         }
     },
+    // Thêm hàm này vào userModel
+    findByUsername: async (username) => {
+        try {
+            const pool = await connectDB();
+            const result = await pool.request()
+                .input('username', sql.NVarChar, username)
+                .query('SELECT * FROM users WHERE username = @username');
+            return result.recordset[0];
+        } catch (error) {
+            throw error;
+        }
+    },
     create: async (userData) => {
         try {
             const pool = await connectDB();
 
+            // Tạo ID mới theo định dạng "USR-XXXX"
+            const result = await pool.request().query(`
+                SELECT MAX(CAST(SUBSTRING(id, 5, LEN(id)-4) AS INT)) as maxNum
+                FROM users
+                WHERE id LIKE 'USR-%'
+            `);
+            
+            let nextNum = 1;
+            if (result.recordset[0].maxNum !== null) {
+                nextNum = result.recordset[0].maxNum + 1;
+            }
+            
+            const userId = `USR-${nextNum.toString().padStart(4, '0')}`;
+
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
 
-            const result = await pool.request()
-                .input('id', sql.VarChar(50), uuidv4())
-                .input('username', sql.VarChar(50), userData.username)
+            const insertResult = await pool.request()
+                .input('id', sql.VarChar(50), userId)
+                .input('username', sql.NVarChar(50), userData.username) // Thay đổi từ VarChar sang NVarChar
                 .input('email', sql.VarChar(100), userData.email)
                 .input('password', sql.VarChar(255), hashedPassword)
                 .input('full_name', sql.NVarChar(100), userData.full_name || '')
@@ -36,7 +62,7 @@ const userModel = {
                     VALUES (@id, @username, @email, @password, @full_name, @phone_number, @address, @role)
                 `);
 
-            return result.recordset[0];
+            return insertResult.recordset[0];
         } catch (error) {
             console.error('Lỗi khi tạo người dùng:', error);
             throw error;
@@ -64,7 +90,13 @@ const userModel = {
 
             if (search) {
                 query += ` AND (username LIKE @search OR email LIKE @search)`;
-                params.push({ name: 'search', value: `%${search}%` });
+                params.push({ name: 'search', value: `%${search}%`, type: sql.NVarChar }); // Thêm kiểu dữ liệu
+            }
+
+            // Đảm bảo sortBy là cột hợp lệ để tránh SQL injection
+            const validColumns = ['id', 'username', 'email', 'full_name', 'role', 'created_at', 'updated_at'];
+            if (!validColumns.includes(sortBy)) {
+                sortBy = 'created_at';
             }
 
             query += ` ORDER BY ${sortBy} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}`;
@@ -74,12 +106,22 @@ const userModel = {
 
             const request = pool.request();
             params.forEach(param => {
-                request.input(param.name, param.value);
+                if (param.type) {
+                    request.input(param.name, param.type, param.value);
+                } else {
+                    request.input(param.name, param.value);
+                }
             });
 
             const result = await request.query(query);
 
-            const users = result.recordset;
+            // Chuẩn hóa Unicode cho kết quả
+            const normalizedUsers = result.recordset.map(user => ({
+                ...user,
+                username: user.username ? user.username.normalize('NFC') : user.username,
+                full_name: user.full_name ? user.full_name.normalize('NFC') : user.full_name,
+                address: user.address ? user.address.normalize('NFC') : user.address
+            }));
 
             const countQuery = `SELECT COUNT(*) AS total_count FROM users WHERE 1=1`;
             const countResult = await pool.request().query(countQuery);
@@ -88,7 +130,7 @@ const userModel = {
             const totalPages = Math.ceil(totalCount / limit);
 
             return {
-                data: users,
+                data: normalizedUsers,
                 pagination: {
                     page: parseInt(page),
                     limit: parseInt(limit),
@@ -104,11 +146,21 @@ const userModel = {
     getById: async (id) => {
         try {
             const pool = await connectDB();
-            let result = await pool.request()
+            const result = await pool.request()
                 .input('id', sql.VarChar(50), id)
-                .query('SELECT * FROM users WHERE id = @id');
-            result.recordset[0].password = undefined;
-            return result.recordset[0];
+                .query('SELECT id, username, email, password, full_name, phone_number, address, role, created_at, updated_at FROM users WHERE id = @id');
+            
+            // Nếu tìm thấy user, chuẩn hóa các trường tiếng Việt
+            if (result.recordset[0]) {
+                const user = result.recordset[0];
+                return {
+                    ...user,
+                    username: user.username ? user.username.normalize('NFC') : user.username,
+                    full_name: user.full_name ? user.full_name.normalize('NFC') : user.full_name,
+                    address: user.address ? user.address.normalize('NFC') : user.address
+                };
+            }
+            return null;
         } catch (error) {
             throw error;
         }
@@ -137,7 +189,7 @@ const userModel = {
 
             const result = await pool.request()
                 .input('id', sql.VarChar(50), userId)
-                .input('username', sql.VarChar(50), updateData.username)
+                .input('username', sql.NVarChar(50), updateData.username) // Thay đổi từ VarChar sang NVarChar
                 .input('email', sql.VarChar(100), updateData.email)
                 .input('full_name', sql.NVarChar(100), updateData.full_name || null)
                 .input('phone_number', sql.VarChar(20), updateData.phone_number || null)
@@ -244,6 +296,109 @@ const userModel = {
 
             return result.rowsAffected[0] > 0;
         } catch (error) {
+            throw error;
+        }
+    },
+    // Thêm các phương thức mới
+
+    // Lưu token đặt lại mật khẩu
+    saveResetToken: async (userId, token, expiryDate) => {
+        try {
+            const pool = await connectDB();
+            await pool.request()
+                .input('userId', sql.VarChar(50), userId)
+                .input('resetToken', sql.VarChar(255), token)
+                .input('resetTokenExpiry', sql.DateTime, expiryDate)
+                .query(`
+                    UPDATE users
+                    SET reset_token = @resetToken, reset_token_expiry = @resetTokenExpiry
+                    WHERE id = @userId
+                `);
+            return true;
+        } catch (error) {
+            console.error('Lỗi khi lưu token đặt lại mật khẩu:', error);
+            throw error;
+        }
+    },
+
+    // Kiểm tra token đặt lại mật khẩu
+    findUserByResetToken: async (token) => {
+        try {
+            const pool = await connectDB();
+            const result = await pool.request()
+                .input('token', sql.VarChar(255), token)
+                .input('now', sql.DateTime, new Date())
+                .query(`
+                    SELECT id, username, email 
+                    FROM users 
+                    WHERE reset_token = @token 
+                    AND reset_token_expiry > @now
+                `);
+            
+            return result.recordset[0];
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra token đặt lại mật khẩu:', error);
+            throw error;
+        }
+    },
+
+    // Cập nhật mật khẩu và xóa token
+    updatePasswordAndClearToken: async (userId, hashedPassword) => {
+        try {
+            const pool = await connectDB();
+            await pool.request()
+                .input('userId', sql.VarChar(50), userId)
+                .input('password', sql.VarChar(255), hashedPassword)
+                .query(`
+                    UPDATE users
+                    SET password = @password, reset_token = NULL, reset_token_expiry = NULL
+                    WHERE id = @userId
+                `);
+            return true;
+        } catch (error) {
+            console.error('Lỗi khi cập nhật mật khẩu:', error);
+            throw error;
+        }
+    },
+
+    // Thêm phương thức này vào userModel
+
+    updatePassword: async (userId, hashedPassword) => {
+        try {
+            const pool = await connectDB();
+            await pool.request()
+                .input('userId', sql.VarChar(50), userId)
+                .input('password', sql.VarChar(255), hashedPassword)
+                .query(`
+                    UPDATE users
+                    SET password = @password
+                    WHERE id = @userId
+                `);
+            return true;
+        } catch (error) {
+            console.error('Lỗi khi cập nhật mật khẩu:', error);
+            throw error;
+        }
+    },
+
+    // Thêm phương thức để cập nhật trạng thái duyệt của đánh giá
+
+    // Cập nhật trạng thái đánh giá
+    updateReviewApproval: async (id, isApproved) => {
+        try {
+            const pool = await connectDB();
+            const result = await pool.request()
+                .input('id', sql.VarChar(50), id)
+                .input('is_approved', sql.Bit, isApproved)
+                .query(`
+                    UPDATE reviews
+                    SET is_approved = @is_approved
+                    WHERE id = @id
+                `);
+
+            return result.rowsAffected[0] > 0;
+        } catch (error) {
+            console.error('Lỗi khi cập nhật trạng thái đánh giá:', error);
             throw error;
         }
     }

@@ -15,13 +15,16 @@ const AddUserPage = () => {
     setError('');
 
     try {
-      await userService.createUser(formData);
+      // Log dữ liệu trước khi gửi để kiểm tra
+      console.log('Sending data:', formData);
+      
+      const response = await userService.createUser(formData);
       toast.success('Người dùng đã được tạo thành công!');
       navigate('/users');
     } catch (error) {
-      console.error('Error creating brand:', error);
-      setError(error.message || 'Có lỗi xảy ra khi tạo Người dùng');
-      toast.error(error.message || 'Có lỗi xảy ra khi tạo Người dùng');
+      console.error('Error creating user:', error);
+      setError(error.message || 'Có lỗi xảy ra khi tạo người dùng');
+      toast.error(error.message || 'Có lỗi xảy ra khi tạo người dùng');
     } finally {
       setLoading(false);
     }

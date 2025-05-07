@@ -117,17 +117,19 @@ const SpaServicesPage = () => {
     { 
       header: 'ID', 
       accessor: 'id',
-      width: '120px',
+      width: '80px',
       noWrap: true
     },
     { 
       header: 'Tên dịch vụ', 
       accessor: 'name',
+      width: '20%',
       noWrap: true
     },
     { 
-      header: 'Loại thú cưng', 
+      header: 'Loại thú', 
       accessor: 'pet_type',
+      width: '100px',
       noWrap: true,
       cell: (row) => {
         switch(row.pet_type) {
@@ -141,6 +143,7 @@ const SpaServicesPage = () => {
     { 
       header: 'Kích thước', 
       accessor: 'pet_size',
+      width: '110px',
       noWrap: true,
       cell: (row) => {
         switch(row.pet_size) {
@@ -155,23 +158,21 @@ const SpaServicesPage = () => {
     { 
       header: 'Giá', 
       accessor: 'price',
+      width: '120px',
       noWrap: true,
       cell: (row) => `${formatCurrency(row.price)} đ`
     },
     { 
-      header: 'Thời gian (phút)', 
+      header: 'Thời gian', 
       accessor: 'duration',
+      width: '100px',
       noWrap: true,
-      cell: (row) => (
-        <span className="duration-value">
-          {row.duration} <span className="duration-unit">phút</span>
-        </span>
-      ),
-      width: '130px'
+      cell: (row) => `${row.duration} phút`
     },
     { 
       header: 'Trạng thái', 
       accessor: 'status',
+      width: '150px',
       noWrap: true,
       cell: (row) => (
         <div className="status-badges">
@@ -217,7 +218,7 @@ const SpaServicesPage = () => {
   ];
   
   return (
-    <div className="spa-services-management page">
+    <div className="page">
       <div className="page-header">
         <h1>Quản lý dịch vụ spa</h1>
         <Link to="/spa-services/add" className="btn-add">

@@ -9,11 +9,13 @@ const productModel = {
         page = 1, 
         limit = 10, 
         category_id,
+        category_type, // Thêm tham số này
         brand_id, 
         pet_type,
         min_price,
         max_price,
         is_active,
+        is_featured,
         sortBy = 'id', 
         sortOrder = 'desc' 
       } = options;
@@ -45,6 +47,12 @@ const productModel = {
         params.push({ name: 'category_id', value: category_id, type: sql.VarChar(50) });
       }
       
+      // Thêm điều kiện lọc theo loại danh mục
+      if (category_type) {
+        query += ` AND EXISTS (SELECT 1 FROM categories c WHERE p.category_id = c.id AND c.type = @category_type)`;
+        params.push({ name: 'category_type', value: category_type, type: sql.VarChar });
+      }
+      
       // Lọc theo thương hiệu
       if (brand_id) {
         query += ' AND p.brand_id = @brand_id';
@@ -72,6 +80,12 @@ const productModel = {
       if (is_active !== undefined) {
         query += ' AND p.is_active = @is_active';
         params.push({ name: 'is_active', value: is_active ? 1 : 0, type: sql.Bit });
+      }
+      
+      // Đảm bảo rằng chỉ thêm điều kiện khi is_featured được chỉ định
+      if (is_featured === true || is_featured === false) {
+        query += ' AND p.is_featured = @is_featured';
+        params.push({ name: 'is_featured', value: is_featured ? 1 : 0, type: sql.Bit });
       }
       
       // Đếm tổng số bản ghi thỏa mãn điều kiện lọc

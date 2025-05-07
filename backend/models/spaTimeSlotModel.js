@@ -58,6 +58,28 @@ const SpaTimeSlotModel = {
         }
       }
       
+      // Xử lý tìm kiếm
+      if (filters.search) {
+        // Kiểm tra xem có phải định dạng thời gian không (HH:MM hoặc H:MM)
+        const timeRegex = /^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/;
+        if (timeRegex.test(filters.search)) {
+          // Người dùng đang tìm kiếm theo định dạng thời gian
+          // Đảm bảo định dạng HH:MM:SS cho SQL
+          let searchTime = filters.search;
+          if (searchTime.split(':').length === 2) {
+            searchTime = `${searchTime}:00`;
+          }
+          
+          // Tìm kiếm chính xác theo time_slot
+          whereConditions.push('CONVERT(VARCHAR(5), time_slot, 108) LIKE @time_search');
+          request.input('time_search', sql.NVarChar, `%${filters.search}%`);
+        } else {
+          // Tìm kiếm thông thường
+          whereConditions.push('id LIKE @search');
+          request.input('search', sql.NVarChar, `%${filters.search}%`);
+        }
+      }
+      
       // Sắp xếp
       const sortBy = filters.sort_by || 'time_slot';
       const sortOrder = (filters.sort_order || 'asc').toUpperCase();

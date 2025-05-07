@@ -33,6 +33,20 @@ import SpaBookingConfirmation from './pages/SpaBookingConfirmation';
 import PaymentCallbackPage from './pages/PaymentCallbackPage';
 // Thêm import
 import SearchPage from './pages/SearchPage';
+// Thêm import
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+// Thêm import ResetPasswordPage
+
+// Thêm import
+import ChangePasswordPage from './pages/ChangePasswordPage';
+// Thêm AuthGuard middleware
+import AuthGuard from "./middleware/AuthGuard";
+
+// Thêm import cho BlogPage
+import BlogPage from './pages/BlogPage';
+
+// Thêm import cho Chatbot
+import Chatbot from './components/chatbot/Chatbot';
 
 const App = () => {
     const dispatch = useDispatch();
@@ -74,22 +88,47 @@ const App = () => {
 
           {/* Route cho search */}
           <Route path="/search" element={<SearchPage />} />
-            <Route
-                path="/login"
-                element={
-                    <GuestGuard>
-                        <LoginPage />
-                    </GuestGuard>
-                }
-            />
-            <Route path="/register" element={
-                <GuestGuard>
-                    <RegisterPage />
-                </GuestGuard>
-            } />
+          
+          {/* Thêm hoặc cập nhật route cho login và register */}
+          <Route
+              path="/login"
+              element={
+                  <GuestGuard>
+                      <LoginPage />
+                  </GuestGuard>
+              }
+          />
+          <Route 
+              path="/register" 
+              element={
+                  <GuestGuard>
+                      <RegisterPage />
+                  </GuestGuard>
+              } 
+          />
+
+          {/* Thêm route cho forgot-password */}
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          {/* Temporarily removed reset password route
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+          */}
+
+          {/* Thêm route cho trang đổi mật khẩu, bảo vệ bởi AuthGuard để đảm bảo người dùng đã đăng nhập */}
+          <Route
+              path="/change-password"
+              element={
+                  <AuthGuard>
+                      <ChangePasswordPage />
+                  </AuthGuard>
+              }
+          />
+
+          {/* Thêm route cho BlogPage */}
+          <Route path="/blogs" element={<BlogPage />} />
         </Routes>
       </main>
       <Footer />
+      <Chatbot />
       <ToastContainer position="top-right" autoClose={3000} />
     </Router>
   );

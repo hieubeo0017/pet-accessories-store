@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchProductById, fetchProductsByCategory } from '../services/api';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../store/cartSlice';
@@ -11,6 +11,7 @@ import './ProductDetailPage.css';
 const ProductDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -102,6 +103,25 @@ const ProductDetailPage = () => {
         quantity,
         type: 'product'
       }));
+    }
+  };
+  
+  const handleBuyNow = () => {
+    if (product && product.stock > 0) {
+      const primaryImage = product.images?.find(img => img.is_primary)?.image_url || product.images?.[0]?.image_url || '';
+      
+      dispatch(addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: primaryImage,
+        quantity,
+        type: 'product'
+      }));
+      
+      // Điều hướng đến trang giỏ hàng và cuộn lên đầu
+      navigate('/cart');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
   
@@ -221,12 +241,20 @@ const ProductDetailPage = () => {
               <span>{quantity}</span>
               <button onClick={increaseQuantity} disabled={quantity >= product.stock}>+</button>
             </div>
-            <button 
-              className="contact-button" 
-              onClick={handleAddToCart}
-            >
-              <FaShoppingCart /> Thêm vào giỏ hàng
-            </button>
+            <div className="purchase-buttons">
+              <button 
+                className="contact-button"
+                onClick={handleBuyNow}
+              >
+                Đặt Mua
+              </button>
+              <button 
+                className="add-cart-button" 
+                onClick={handleAddToCart}
+              >
+                <FaShoppingCart /> Thêm vào giỏ
+              </button>
+            </div>
           </div>
         )}
         

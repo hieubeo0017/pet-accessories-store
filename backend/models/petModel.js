@@ -15,6 +15,7 @@ const petModel = {
         max_price,
         is_adopted,
         is_active,
+        is_featured, // Thêm is_featured vào đây
         category_id,
         sortBy = 'id', 
         sortOrder = 'desc' 
@@ -84,6 +85,12 @@ const petModel = {
       if (is_active !== undefined) {
         query += ' AND p.is_active = @is_active';
         params.push({ name: 'is_active', value: is_active ? 1 : 0, type: sql.Bit });
+      }
+      
+      // Lọc theo trạng thái nổi bật
+      if (is_featured !== undefined) {
+        query += ' AND p.is_featured = @is_featured';
+        params.push({ name: 'is_featured', value: is_featured ? 1 : 0, type: sql.Bit });
       }
       
       // Đếm tổng số bản ghi thỏa mãn điều kiện lọc
@@ -602,7 +609,8 @@ const petModel = {
     try {
       const { 
         type = '', 
-        limit = 4
+        limit = 4,
+        is_active = true // Thêm tham số này với giá trị mặc định true
       } = options;
       
       const pool = await connectDB();
@@ -614,9 +622,13 @@ const petModel = {
           pets p
           LEFT JOIN categories c ON p.category_id = c.id
         WHERE 
-          p.is_featured = 1 
-          AND p.is_active = 1
+          p.is_featured = 1
       `;
+      
+      // Thêm điều kiện is_active nếu được yêu cầu
+      if (is_active !== undefined) {
+        query += ` AND p.is_active = 1`;
+      }
       
       const params = [];
       

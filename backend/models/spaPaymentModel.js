@@ -4,14 +4,13 @@ const spaPaymentModel = {
   // Tạo thanh toán mới
   create: async (paymentData) => {
     try {
-      console.log("Thông tin thanh toán cần lưu:", paymentData);
       const pool = await connectDB();
       const transaction = new sql.Transaction(pool);
       
       try {
         await transaction.begin();
         
-        // Tạo ID theo định dạng "PAY-XXXX"
+        // Tạo ID thanh toán dạng PAY-XXXX
         const idResult = await new sql.Request(transaction).query(`
           SELECT MAX(CAST(SUBSTRING(id, 5, LEN(id)-4) AS INT)) as maxNum
           FROM spa_payments
@@ -34,7 +33,7 @@ const spaPaymentModel = {
           .input('payment_method', paymentData.payment_method)
           .input('transaction_id', paymentData.transaction_id || null)
           .input('payment_date', sql.DateTime, paymentData.payment_date || new Date())
-          .input('status', paymentData.status || 'completed')
+          .input('status', paymentData.status || 'pending') // Mặc định là pending
           .input('notes', paymentData.notes || null)
           .query(`
             INSERT INTO spa_payments (
@@ -49,8 +48,8 @@ const spaPaymentModel = {
           
         console.log("Đã thêm thanh toán vào database");
         
-        // Cập nhật trạng thái thanh toán của lịch hẹn nếu đã thanh toán đủ
-        if (paymentData.update_appointment_status) {
+        // Cập nhật trạng thái thanh toán của lịch hẹn chỉ khi không phải tiền mặt hoặc có chỉ định đặc biệt
+        if (paymentData.update_appointment_status && paymentData.payment_method !== 'cash') {
           console.log("Cập nhật trạng thái thanh toán của lịch hẹn:", paymentData.appointment_id);
           await new sql.Request(transaction)
             .input('id', paymentData.appointment_id)
@@ -65,7 +64,7 @@ const spaPaymentModel = {
             `);
         }
         
-        // QUAN TRỌNG: Đảm bảo commit transaction
+        // Commit transaction
         await transaction.commit();
         console.log("Đã commit transaction thành công");
         
@@ -104,21 +103,21 @@ const spaPaymentModel = {
   },
   
   // Cập nhật trạng thái thanh toán
-  updateStatus: async (id, status) => {
+  updateStatus: async (paymentId, status, notes) => {
     try {
       const pool = await connectDB();
       
-      // Cập nhật trạng thái
       await pool.request()
-        .input('id', sql.VarChar(50), id)
+        .input('id', sql.VarChar(50), paymentId)
         .input('status', sql.VarChar(20), status)
+        .input('notes', sql.NVarChar(sql.MAX), notes)
         .query(`
           UPDATE spa_payments
           SET status = @status,
-              updated_at = GETDATE()
+              notes = @notes
           WHERE id = @id
         `);
-        
+      
       return { success: true };
     } catch (error) {
       console.error('Error updating payment status:', error);
@@ -283,6 +282,64 @@ const spaPaymentModel = {
       }
     } catch (error) {
       console.error('Error updating transaction ID:', error);
+      throw error;
+    }
+  },
+
+  // Thêm phương thức mới để cập nhật cả phương thức thanh toán và trạng thái
+  updatePaymentMethodAndStatus: async (paymentId, newPaymentMethod, status, notes) => {
+    try {
+      const pool = await connectDB();
+      
+      await pool.request()
+        .input('id', sql.VarChar(50), paymentId)
+        .input('payment_method', sql.VarChar(20), newPaymentMethod)
+        .input('status', sql.VarChar(20), status)
+        .input('notes', sql.NVarChar(sql.MAX), notes)
+        .query(`
+          UPDATE spa_payments
+          SET payment_method = @payment_method,
+              status = @status,
+              notes = @notes
+          WHERE id = @id
+        `);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating payment method and status:', error);
+      throw error;
+    }
+  },
+
+  // Thêm phương thức mới để cập nhật cả transaction_id và status
+  updateTransactionAndStatus: async (paymentId, transactionId, status) => {
+    try {
+      const pool = await connectDB();
+      
+      await pool.request()
+        .input('id', sql.VarChar(50), paymentId)
+        .input('transaction_id', sql.VarChar(255), transactionId)
+        .input('status', sql.VarChar(20), status)
+        .query(`
+          UPDATE spa_payments
+          SET transaction_id = @transaction_id,
+              status = @status
+          WHERE id = @id
+        `);
+      
+      // Kiểm tra lại sau khi cập nhật
+      const verifyResult = await pool.request()
+        .input('id', sql.VarChar(50), paymentId)
+        .query(`SELECT * FROM spa_payments WHERE id = @id`);
+      
+      const updated = verifyResult.recordset[0];
+      if (updated.transaction_id === transactionId && updated.status === status) {
+        return { success: true, data: updated };
+      } else {
+        return { success: false, message: 'Cập nhật không thành công' };
+      }
+    } catch (error) {
+      console.error('Error updating transaction ID and status:', error);
       throw error;
     }
   }

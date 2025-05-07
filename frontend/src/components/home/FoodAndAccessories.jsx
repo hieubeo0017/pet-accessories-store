@@ -106,7 +106,14 @@ const FoodAndAccessories = () => {
           })}
         </div>
         <div className="view-more">
-          <Link to="/products" className="view-more-btn">Xem tất cả sản phẩm</Link>
+          <div className="view-more-buttons">
+            <Link to="category/accessories" className="view-more-btn">
+              Xem phụ kiện thú cưng
+            </Link>
+            <Link to="/foods" className="view-more-btn">
+              Xem thức ăn thú cưng
+            </Link>
+          </div>
         </div>
       </section>
       

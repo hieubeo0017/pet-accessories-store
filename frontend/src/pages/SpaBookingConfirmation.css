@@ -122,6 +122,15 @@
   font-weight: 500;
 }
 
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .confirmed {
   background-color: #e3fcef;
   color: #0c6b58;

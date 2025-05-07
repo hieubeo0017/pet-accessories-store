@@ -123,27 +123,24 @@ const RescheduleModal = ({ appointment, onClose, onSuccess }) => {
                 <div className="loading-slots">Đang kiểm tra khung giờ khả dụng...</div>
               ) : (
                 <div className="time-slots">
-                  {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"].map(time => {
-                    const slotInfo = availableSlots[time] || { total: 0, used: 0, available: 3 };
-                    const available = slotInfo.available > 0;
-                    
+                  {Object.entries(availableSlots).map(([time, slotInfo]) => {
+                    const isAvailable = slotInfo.available > 0;
                     return (
-                      <div className="time-slot-container" key={time}>
-                        <button
-                          type="button"
-                          className={`time-slot-btn ${rescheduleData.time === time ? 'selected' : ''} ${!available ? 'disabled' : ''}`}
-                          onClick={() => {
-                            if (available) {
-                              console.log('Chọn giờ:', time);
-                              setRescheduleData(prev => ({ ...prev, time }));
-                            }
-                          }}
-                          disabled={!available}
+                      <div 
+                        key={time} 
+                        className={`time-slot-container ${!isAvailable ? 'time-disabled' : ''}`}
+                      >
+                        <div
+                          className={`time-slot-option ${rescheduleData.time === time ? 'selected' : ''}`}
+                          onClick={() => isAvailable && setRescheduleData(prev => ({ ...prev, time }))}
                         >
-                          {time}
-                          {available && <span className="available-tag">{slotInfo.available} chỗ</span>}
-                        </button>
-                        {!available && <span className="full-tag">Đã đầy</span>}
+                          <div className="time">{time}</div>
+                          {isAvailable ? (
+                            <div className="availability">{slotInfo.available}/{slotInfo.total} chỗ</div>
+                          ) : (
+                            <div className="full-status">Đã đầy</div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

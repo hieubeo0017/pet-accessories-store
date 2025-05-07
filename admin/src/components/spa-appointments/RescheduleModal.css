@@ -1,4 +1,4 @@
- */
+*/
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -92,48 +92,95 @@
   cursor: not-allowed;
 }
 
-/* Sử dụng lại CSS từ AddSpaAppointment.css nhưng thu nhỏ lại */
+/* Thay thế CSS cho time slots */
+
 .reschedule-modal .time-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 15px;
 }
 
 .reschedule-modal .time-slot-container {
-  position: relative;
+  flex: 0 0 calc(33.33% - 8px);
+  box-sizing: border-box;
 }
 
-.reschedule-modal .time-slot-btn {
-  padding: 8px;
+.reschedule-modal .time-slot-option {
+  background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 4px;
-  background-color: #f8f9fa;
+  padding: 10px 5px;
+  text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 65px;
-  font-size: 13px;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
-.reschedule-modal .time-slot-btn.selected {
-  background-color: #1976d2;
+/* Cải thiện trạng thái selected của khung giờ */
+.reschedule-modal .time-slot-option.selected {
+  background-color: #1976d2; /* Màu xanh đậm hơn để tăng độ tương phản */
+  border-color: #1565c0;
   color: white;
-  border-color: #1976d2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-.reschedule-modal .available-tag {
-  font-size: 11px;
-  margin-top: 4px;
+/* Cải thiện hiển thị số chỗ trống khi được chọn */
+.reschedule-modal .time-slot-option.selected .availability {
+  background-color: rgba(255, 255, 255, 0.25); /* Nền trắng mờ */
+  color: white;
+  font-weight: 500;
+  border: none;
 }
 
-.reschedule-modal .full-tag {
-  font-size: 11px;
+/* Tăng độ nổi bật của giờ khi được chọn */
+.reschedule-modal .time-slot-option.selected .time {
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 5px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); /* Thêm đổ bóng nhẹ */
+}
+
+/* Đảm bảo rõ ràng khi hover */
+.reschedule-modal .time-slot-option:hover:not(.selected) {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.reschedule-modal .time-slot-container.time-disabled .time-slot-option {
+  background-color: #ffebee;
+  border-color: #ffcdd2;
   color: #d32f2f;
-  position: absolute;
-  bottom: -16px;
-  left: 50%;
-  transform: translateX(-50%);
+  cursor: default;
+}
+
+.reschedule-modal .time {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.reschedule-modal .availability {
+  font-size: 13px;
+  background-color: rgba(76, 175, 80, 0.15);
+  border-radius: 12px;
+  padding: 2px 8px;
+  color: #388e3c;
+}
+
+/* Hiển thị rõ "Đã đầy" khi trạng thái disabled */
+.reschedule-modal .full-status {
+  font-size: 13px;
+  background-color: #f44336;
+  border-radius: 12px;
+  padding: 3px 10px;
+  color: white;
+  font-weight: 600;
+  margin-top: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); /* Thêm đổ bóng nhẹ */
 }

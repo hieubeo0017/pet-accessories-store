@@ -34,8 +34,8 @@
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
-  min-width: 180px;
+  gap: 30px; /* Tăng khoảng cách từ 20px lên 30px */
+  min-width: 220px; /* Tăng min-width cho đủ không gian */
   justify-content: flex-end;
 }
 
@@ -257,12 +257,14 @@
 .hotline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 130px; /* Đảm bảo đủ không gian */
 }
 
 .hotline-icon {
   color: var(--primary-color);
-  font-size: 18px;
+  font-size: 20px; /* Tăng kích thước từ 18px */
+  min-width: 20px; /* Đảm bảo icon không bị co lại */
 }
 
 .hotline-content {
@@ -285,6 +287,7 @@
 /* Cart icon styling */
 .cart-icon {
   position: relative;
+  padding: 5px; /* Thêm padding để tăng vùng bấm */
 }
 
 .cart-icon-blue {
@@ -325,6 +328,10 @@
   .header-left, .header-right {
     min-width: auto;
   }
+
+  .header-right {
+    gap: 25px; /* Giảm một chút gap trên màn hình nhỏ */
+  }
 }
 
 @media (max-width: 768px) {
@@ -340,6 +347,7 @@
   
   .header-right {
     order: 2;
+    gap: 20px; /* Giảm thêm gap trên màn hình nhỏ hơn */
   }
   
   .header-center {
@@ -370,4 +378,170 @@
   .cart-icon-blue {
     font-size: 20px;
   }
+}
+
+/* Thêm vào file Header.css */
+.user-profile-simple {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  border: 1px solid #e0e0e0;
+}
+
+.user-info-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name-simple {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.logout-link:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+  
+/* Thêm vào cuối file */
+
+/* Styling cho icon user và dropdown */
+.user-auth {
+  position: relative;
+}
+
+.user-avatar-icon {
+  width: 36px; /* Tăng từ 32px */
+  height: 36px; /* Tăng từ 32px */
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  padding: 6px; /* Thêm padding */
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 1000;
+}
+
+.dropdown-content {
+  padding: 10px;
+}
+
+.user-info-dropdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name-dropdown {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.dropdown-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dropdown-logout:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.dropdown-link {
+  display: block;
+  padding: 8px 0;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.dropdown-link:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.dropdown-link:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.dropdown-menu .dropdown-link {
+  padding: 8px 15px;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.dropdown-menu .dropdown-link:hover {
+  background-color: #f0f7ff;
+  color: var(--primary-color);
+}
+
+.dropdown-menu button {
+  padding: 8px 15px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #f44336;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  border-radius: 4px;
+}
+
+.dropdown-menu button:hover {
+  background-color: #fff5f5;
 }

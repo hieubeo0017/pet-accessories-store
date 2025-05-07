@@ -1,20 +1,23 @@
 .payment-callback-page {
-  min-height: calc(100vh - 200px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  min-height: 80vh;
   padding: 20px;
+  text-align: center; /* Đảm bảo tất cả nội dung được căn giữa */
 }
 
 .callback-container {
-  max-width: 500px;
-  width: 100%;
   background-color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   padding: 40px;
-  text-align: center;
-  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Căn giữa các phần tử con theo chiều dọc */
+  text-align: center; /* Căn giữa văn bản */
 }
 
 .callback-container.success {
@@ -39,29 +42,52 @@
   margin: 0 auto 25px;
 }
 
-.success-icon {
-  color: #4caf50;
-  font-size: 70px;
-  margin-bottom: 20px;
+.success-icon, .error-icon {
+  font-size: 64px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.error-icon {
-  color: #f44336;
-  font-size: 70px;
-  margin-bottom: 20px;
+.success-icon i {
+  color: #4CAF50;
+}
+
+.error-icon i {
+  color: #F44336;
 }
 
 .callback-container h2 {
-  font-size: 26px;
-  margin-bottom: 15px;
+  font-size: 28px;
   color: #333;
+  margin: 20px 0 15px;
+  text-align: center;
+  width: 100%;
 }
 
 .callback-container .message {
-  color: #666;
-  margin-bottom: 20px;
   font-size: 16px;
-  line-height: 1.5;
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.6;
+  text-align: center;
+  width: 100%;
+}
+
+.payment-details {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 10px 0 25px;
+  width: 100%;
+  text-align: center;
+}
+
+.payment-details p {
+  margin: 8px 0;
+  font-size: 15px;
+  text-align: center;
 }
 
 .appointment-id {
@@ -75,22 +101,26 @@
 }
 
 .actions {
-  margin-top: 30px;
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .btn-primary {
-  background-color: #2196f3;
+  background-color: #2196F3;
   color: white;
   border: none;
-  padding: 12px 24px;
   border-radius: 4px;
+  padding: 12px 24px;
   font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.3s;
+  font-weight: 500;
 }
 
 .btn-primary:hover {
-  background-color: #1976d2;
+  background-color: #0b7dda;
 }
 
 @keyframes spin {

@@ -115,8 +115,8 @@ const PaymentModal = ({ appointment, onClose, onSuccess }) => {
         createSpaPayment(appointment.id, {
           amount: parseFloat(amount),
           payment_method: 'cash',
-          status: 'completed',
-          notes: notes
+          status: 'pending', // Thay đổi từ 'completed' thành 'pending'
+          notes: notes || 'Thanh toán tại quầy'
         })
           .then(handlePaymentSuccess)
           .catch(handlePaymentError);

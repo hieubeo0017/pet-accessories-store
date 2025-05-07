@@ -231,20 +231,47 @@ const SpaAppointmentsPage = () => {
   const handleCancelConfirm = async () => {
     try {
       setLoading(true);
-      // Gọi API hủy lịch hẹn thực tế
+      console.log('Bắt đầu hủy lịch hẹn với ID:', selectedAppointmentId);
+      
+      // Gọi API hủy lịch hẹn
       const response = await cancelSpaAppointment(selectedAppointmentId);
       
-      if (response.success) {
-        // Cập nhật danh sách lịch hẹn
-        const updatedAppointments = appointments.map(apt => 
-          apt.id === selectedAppointmentId || apt.appointment_id === selectedAppointmentId
-            ? { ...apt, status: 'cancelled', can_cancel: false, can_reschedule: false } 
-            : apt
-        );
-        setAppointments(updatedAppointments);
+      console.log('Phản hồi từ API hủy lịch:', response);
+      
+      // Kiểm tra đúng định dạng response từ API
+      if (response && response.data) {
+        // Lấy trạng thái trực tiếp từ dữ liệu phản hồi API
+        const actualStatus = response.data.status;
+        
+        console.log('Trạng thái mới từ API:', actualStatus);
+        
+        // Cập nhật trạng thái trong danh sách appointments
+        const newAppointments = appointments.map(apt => {
+          if (apt.id === selectedAppointmentId || apt.appointment_id === selectedAppointmentId) {
+            console.log('Đang cập nhật trạng thái lịch hẹn từ:', apt.status, 'thành:', actualStatus);
+            return { 
+              ...apt, 
+              status: actualStatus, 
+              can_cancel: false, 
+              can_reschedule: false 
+            };
+          }
+          return apt;
+        });
+        
+        // Cập nhật state
+        setAppointments(newAppointments);
+        
+        // Hiển thị thông báo thành công
         toast.success('Hủy lịch hẹn thành công');
+        
+        // Force re-render để đảm bảo UI được cập nhật
+        setTimeout(() => {
+          // Sử dụng hàm callback trong setState để đảm bảo sử dụng state mới nhất
+          setAppointments(current => [...current]);
+        }, 100);
       } else {
-        toast.error(response.message || 'Không thể hủy lịch hẹn');
+        toast.error('Không thể hủy lịch hẹn');
       }
     } catch (err) {
       console.error('Error cancelling appointment:', err);
@@ -269,7 +296,11 @@ const SpaAppointmentsPage = () => {
     );
     
     if (appointment) {
-      setSelectedAppointmentId(id);
+      // Sử dụng ID chính xác từ đối tượng lịch hẹn (ưu tiên id hơn appointment_id)
+      const actualId = appointment.id || appointment.appointment_id;
+      console.log('ID lịch hẹn cần đổi:', actualId);
+      
+      setSelectedAppointmentId(actualId);
       
       // Lưu thông tin lịch hẹn gốc
       setOriginalAppointment({
@@ -407,8 +438,22 @@ const SpaAppointmentsPage = () => {
 
   // Thêm các hàm xử lý sự kiện cho các nút
   const handleCancelClick = (id) => {
-    setSelectedAppointmentId(id);
-    setShowCancelModal(true);
+    // Tìm đối tượng lịch hẹn trong danh sách
+    const appointment = appointments.find(apt => 
+      apt.id === id || apt.appointment_id === id
+    );
+    
+    if (appointment) {
+      // Sử dụng ID chính xác từ đối tượng lịch hẹn (ưu tiên id hơn appointment_id)
+      const actualId = appointment.id || appointment.appointment_id;
+      console.log('ID lịch hẹn cần hủy:', actualId);
+      
+      // Lưu ID chính xác vào state
+      setSelectedAppointmentId(actualId);
+      setShowCancelModal(true);
+    } else {
+      toast.error('Không tìm thấy thông tin lịch hẹn');
+    }
   };
 
   const handleReviewClick = (id) => {
@@ -661,8 +706,8 @@ const SpaAppointmentsPage = () => {
             </div>
           ) : (
             <div className="appointments-list">
-              {appointments.map(appointment => (
-                <div className="appointment-card" key={appointment.appointment_id}>
+              {appointments.map((appointment, index) => (
+                <div className="appointment-card" key={appointment.id || appointment.appointment_id || `appointment-${index}`}>
                   <div className="appointment-header">
                     <h3>Mã đặt lịch: {appointment.id || appointment.appointment_id}</h3>
                     {(() => {
@@ -717,8 +762,8 @@ const SpaAppointmentsPage = () => {
                               <li key={service.id || service.service_id} className="service-item">
                                 <div className="service-info">
                                   <span className="service-name">
-                                    <i className={`fas ${getServiceIcon(service.name)}`}></i>
-                                    {service.name || 'Dịch vụ không xác định'}
+                                    <i className={`fas ${getServiceIcon(service.service_name || service.name)}`}></i>
+                                    {service.service_name || service.name || 'Dịch vụ không xác định'}
                                   </span>
                                   <div className="service-details">
                                     {service.duration && (
@@ -774,15 +819,15 @@ const SpaAppointmentsPage = () => {
                       </button>
                     )}
 
-                    {/* Nút thanh toán - hiển thị cho tất cả lịch hẹn chưa thanh toán đầy đủ */}
-                    {(appointment.payment_status !== 'paid' || appointment.payment_method === 'cash') && (
+                    {/* Chỉ hiển thị nút thanh toán khi lịch hẹn chưa hủy và chưa thanh toán */}
+                    {appointment.status !== 'cancelled' && appointment.payment_status !== 'paid' && (
                       <button className="btn-payment" onClick={() => handlePaymentClick(appointment)}>
                         <i className="fas fa-credit-card"></i> 
                         {appointment.payment_method === 'cash' ? 'Thanh toán online' : 'Thanh toán'}
                       </button>
                     )}
-                    
-                    {/* Nút xem lịch sử thanh toán */}
+
+                    {/* Luôn hiển thị nút lịch sử thanh toán */}
                     <button className="btn-history" onClick={() => handlePaymentHistoryClick(appointment)}>
                       <i className="fas fa-history"></i> Lịch sử thanh toán
                     </button>
@@ -886,7 +931,11 @@ const SpaAppointmentsPage = () => {
                               onClick={() => info.available > 0 && setRescheduleData(prev => ({ ...prev, time }))}
                             >
                               <span className="time">{time}</span>
-                              <span className="availability">{info.available}/{info.total} chỗ</span>
+                              {info.available > 0 ? (
+                                <span className="availability">{info.available}/{info.total} chỗ</span>
+                              ) : (
+                                <span className="full-tag">Đã đầy</span>
+                              )}
                             </div>
                           ))}
                         </div>

@@ -12,7 +12,8 @@ const SpaTimeSlotController = {
         time_from: req.query.time_from,
         time_to: req.query.time_to,
         sort_by: req.query.sort_by,
-        sort_order: req.query.sort_order
+        sort_order: req.query.sort_order,
+        search: req.query.search // Đảm bảo truyền tham số search
       };
       
       // Gọi model với các tham số lọc

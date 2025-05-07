@@ -1,311 +1,423 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { FaFilter, FaTimes } from 'react-icons/fa';
-
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { FaSearch, FaFilter, FaTimes, FaDog, FaPaw, FaTag, FaMoneyBillWave } from 'react-icons/fa';
 import ProductCard from '../components/products/ProductCard';
-import PetCard from '../components/pets/PetCard';
-import ServiceCard from './ServiceCard'; // Fixed import path
-import { 
-  fetchProductsByCategory, 
-  fetchPets, 
-  fetchSpaServices, 
-  fetchCategories 
-} from '../services/api';
+import { fetchProducts, fetchAllBrands, fetchCategories } from '../services/api';
+import { addItem } from '../store/cartSlice';
 import './CategoryPage.css';
 
+// Thêm hàm debounce
+const debounce = (func, delay) => {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+};
+
 const CategoryPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
-  const [categoryMap, setCategoryMap] = useState({}); // Store categories with their types
-  
-  // Load all categories initially to create a map
-  useEffect(() => {
-    const loadCategoryMap = async () => {
-      try {
-        const response = await fetchCategories();
-        if (response.data && Array.isArray(response.data)) {
-          // Create a map of category ID to category type
-          const map = {};
-          response.data.forEach(category => {
-            map[category.id] = category.type || 'unknown';
-          });
-          setCategoryMap(map);
-        }
-      } catch (err) {
-        console.error('Error loading categories:', err);
-      }
-    };
+    const [products, setProducts] = useState([]);
+    const [brands, setBrands] = useState([]);
+    const [accessoryCategories, setAccessoryCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     
-    loadCategoryMap();
-  }, []);
-  
-  // Initialize from URL parameters
-  useEffect(() => {
-    const initFromURL = () => {
-      // Get categories from URL
-      const categoryParam = searchParams.get('categories')?.split(',').filter(Boolean) || [];
-      if (categoryParam.length > 0) {
-        setSelectedCategories(categoryParam);
-      }
-      
-      // Get brands from URL
-      const brandParam = searchParams.get('brands')?.split(',').filter(Boolean) || [];
-      if (brandParam.length > 0) {
-        setSelectedBrands(brandParam);
-      }
-      
-      // Get price range from URL
-      const minPrice = searchParams.get('minPrice') || '';
-      const maxPrice = searchParams.get('maxPrice') || '';
-      if (minPrice || maxPrice) {
-        setPriceRange({ min: minPrice, max: maxPrice });
-      }
-    };
+    // Tách riêng state cho giá để xử lý input
+    const [priceInputs, setPriceInputs] = useState({
+        minPrice: '',
+        maxPrice: ''
+    });
     
-    initFromURL();
-    // Only run once at component mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
-  // Update URL and load items when filters change
-  useEffect(() => {
-    const updateUrlAndLoadData = () => {
-      // Build URL parameters
-      const params = new URLSearchParams();
-      
-      if (selectedCategories.length > 0) {
-        params.set('categories', selectedCategories.join(','));
-      }
-      
-      if (selectedBrands.length > 0) {
-        params.set('brands', selectedBrands.join(','));
-      }
-      
-      if (priceRange.min) {
-        params.set('minPrice', priceRange.min);
-      }
-      
-      if (priceRange.max) {
-        params.set('maxPrice', priceRange.max);
-      }
-      
-      // Update URL without triggering a navigation
-      setSearchParams(params, { replace: true });
-      
-      // Load items with current filters
-      loadAllItems();
-    };
+    const [filters, setFilters] = useState({
+        petType: 'all',
+        brand_id: '',
+        minPrice: '',
+        maxPrice: '',
+        categoryId: '', 
+        page: 1
+    });
     
-    // Only run if categoryMap is loaded and we have necessary data
-    if (Object.keys(categoryMap).length > 0) {
-      updateUrlAndLoadData();
-    }
-  }, [selectedCategories, selectedBrands, priceRange, categoryMap, setSearchParams]);
-  
-  const loadAllItems = async () => {
-    if (selectedCategories.length === 0 && Object.keys(categoryMap).length > 0) {
-      setItems([]);
-      return;
-    }
+    const [pagination, setPagination] = useState({
+        total: 0,
+        totalPages: 1,
+        limit: 12,
+        page: 1
+    });
     
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Categorize selected categories by type
-      const petCategories = [];
-      const foodCategories = [];
-      const accessoryCategories = [];
-      const serviceCategories = [];
-      
-      selectedCategories.forEach(categoryId => {
-        const categoryType = categoryMap[categoryId];
-        if (categoryType === 'pet') {
-          petCategories.push(categoryId);
-        } else if (categoryType === 'food') {
-          foodCategories.push(categoryId);
-        } else if (categoryType === 'accessory') {
-          accessoryCategories.push(categoryId);
-        } else if (categoryType === 'service') {
-          serviceCategories.push(categoryId);
-        }
-      });
-      
-      // Prepare filter options
-      const filterOptions = {
-        brand_id: selectedBrands.length > 0 ? selectedBrands : undefined,
-        min_price: priceRange.min || undefined,
-        max_price: priceRange.max || undefined
-      };
-      
-      // Fetch data from each category type
-      const [petsData, foodData, accessoriesData, servicesData] = await Promise.all([
-        petCategories.length > 0 ? 
-          fetchPets({ category_id: petCategories, ...filterOptions }) : 
-          { data: [] },
-        
-        foodCategories.length > 0 ? 
-          Promise.all(foodCategories.map(catId => 
-            fetchProductsByCategory(catId, filterOptions)
-          )).then(responses => {
-            const allData = [];
-            responses.forEach(res => {
-              if (res.data && Array.isArray(res.data)) {
-                allData.push(...res.data);
-              }
+    const dispatch = useDispatch();
+    const filtersRef = useRef(filters);
+
+    // Cập nhật ref khi filters thay đổi
+    useEffect(() => {
+        filtersRef.current = filters;
+    }, [filters]);
+
+    // Thêm useEffect để cuộn lên đầu trang khi component được mount
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
+    // Tải danh sách danh mục phụ kiện
+    useEffect(() => {
+        const loadAccessoryCategories = async () => {
+            try {
+                const response = await fetchCategories({ type: 'accessory' });
+                if (response && response.data) {
+                    setAccessoryCategories(response.data);
+                }
+            } catch (error) {
+                console.error('Error loading accessory categories:', error);
+            }
+        };
+
+        loadAccessoryCategories();
+    }, []);
+
+    // Load danh sách thương hiệu
+    useEffect(() => {
+        const loadBrands = async () => {
+            try {
+                const response = await fetchAllBrands();
+                if (response && response.data) {
+                    setBrands(response.data);
+                }
+            } catch (error) {
+                console.error('Error loading brands:', error);
+            }
+        };
+
+        loadBrands();
+    }, []);
+
+    // Tạo hàm loadProducts riêng biệt
+    const loadProducts = async () => {
+        try {
+            setLoading(true);
+            
+            const response = await fetchProducts({
+                page: filtersRef.current.page,
+                limit: 12,
+                category_type: 'accessory',
+                category_id: filtersRef.current.categoryId || undefined,
+                pet_type: filtersRef.current.petType !== 'all' ? filtersRef.current.petType : undefined,
+                brand_id: filtersRef.current.brand_id || undefined,
+                min_price: filtersRef.current.minPrice || undefined,
+                max_price: filtersRef.current.maxPrice || undefined,
+                is_active: true
             });
-            return { data: allData };
-          }) : 
-          { data: [] },
+            
+            if (response && response.data) {
+                setProducts(response.data);
+                setPagination(response.pagination);
+            } else {
+                setProducts([]);
+            }
+            setLoading(false);
+        } catch (error) {
+            console.error('Error loading products:', error);
+            setProducts([]);
+            setLoading(false);
+        }
+    };
+
+    // Tạo hàm debounced để xử lý giá
+    const debouncedLoadProducts = useCallback(
+        debounce(() => {
+            loadProducts();
+        }, 800),
+        []
+    );
+
+    // useEffect cho các filter không phải giá
+    useEffect(() => {
+        if (accessoryCategories.length > 0 || filters.categoryId) {
+            loadProducts();
+        }
+    }, [filters.petType, filters.brand_id, filters.categoryId, filters.page, accessoryCategories]);
+
+    // useEffect riêng cho giá
+    useEffect(() => {
+        if (filters.minPrice !== '' || filters.maxPrice !== '') {
+            debouncedLoadProducts();
+        }
+    }, [filters.minPrice, filters.maxPrice]);
+
+    const handleAddToCart = (product) => {
+        if (product && product.stock > 0) {
+            const primaryImage = product.images?.find(img => img.is_primary)?.image_url || product.images?.[0]?.image_url || '';
+            
+            dispatch(addItem({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: getImageUrl(primaryImage),
+                quantity: 1,
+                type: 'product'
+            }));
+        }
+    };
+
+    // Xử lý thay đổi bộ lọc
+    const handleFilterChange = (name, value) => {
+        setFilters({
+            ...filters,
+            [name]: value,
+            page: 1
+        });
+    };
+
+    // Xử lý thay đổi bộ lọc giá với debounce
+    const handlePriceFilterChange = (name, value) => {
+        // Cập nhật UI ngay lập tức
+        setPriceInputs(prev => ({
+            ...prev,
+            [name]: value
+        }));
         
-        accessoryCategories.length > 0 ? 
-          Promise.all(accessoryCategories.map(catId => 
-            fetchProductsByCategory(catId, filterOptions)
-          )).then(responses => {
-            const allData = [];
-            responses.forEach(res => {
-              if (res.data && Array.isArray(res.data)) {
-                allData.push(...res.data);
-              }
-            });
-            return { data: allData };
-          }) : 
-          { data: [] },
+        // Đảm bảo giá trị là số hợp lệ
+        const sanitizedValue = value === '' ? '' : value.replace(/[^\d]/g, '');
         
-        serviceCategories.length > 0 ? 
-          fetchSpaServices({ categories: serviceCategories, ...filterOptions }) : 
-          { data: [] }
-      ]);
-      
-      // Process and combine results
-      const allItems = [
-        ...petsData.data.map(item => ({ ...item, itemType: 'pet' })),
-        ...foodData.data.map(item => ({ ...item, itemType: 'food' })),
-        ...accessoriesData.data.map(item => ({ ...item, itemType: 'accessory' })),
-        ...servicesData.data.map(item => ({ ...item, itemType: 'service' }))
-      ];
-      
-      setItems(allItems);
-    } catch (error) {
-      console.error('Error loading items:', error);
-      setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleCategorySelect = (updatedCategories) => {
-    setSelectedCategories(updatedCategories);
-  };
-  
-  const handleBrandSelect = (updatedBrands) => {
-    setSelectedBrands(updatedBrands);
-  };
-  
-  const handlePriceChange = (updatedPriceRange) => {
-    setPriceRange(updatedPriceRange);
-  };
-  
-  // Function to clear all filters
-  const clearAllFilters = () => {
-    setSelectedCategories([]);
-    setSelectedBrands([]);
-    setPriceRange({ min: '', max: '' });
-  };
-  
-  // Render item based on its type
-  const renderItem = (item) => {
-    switch (item.itemType) {
-      case 'pet':
-        return <PetCard key={item.id} pet={item} />;
-      case 'food':
-      case 'accessory':
-        return <ProductCard key={item.id} product={item} />;
-      case 'service':
-        return <ServiceCard key={item.id} service={item} />;
-      default:
-        return null;
-    }
-  };
-  
-  return (
-    <div className="category-page">
-      <div className="page-header">
-        <h1>Danh mục sản phẩm</h1>
-        <button 
-          className="filter-toggle-btn"
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-        >
-          {isFilterOpen ? (
-            <>
-              <FaTimes /> Ẩn bộ lọc
-            </>
-          ) : (
-            <>
-              <FaFilter /> Hiện bộ lọc
-            </>
-          )}
-        </button>
-      </div>
-      
-      <div className="page-content">
-        <div className={`sidebar-container ${isFilterOpen ? 'open' : ''}`}>
-          <CategorySidebar 
-            selectedCategories={selectedCategories}
-            onCategorySelect={handleCategorySelect}
-            selectedBrands={selectedBrands}
-            onBrandSelect={handleBrandSelect}
-            priceRange={priceRange}
-            onPriceChange={handlePriceChange}
-            categoryType="all" // Hiển thị tất cả loại danh mục
-          />
-        </div>
+        // Cập nhật filters (sẽ trigger useEffect với debounce)
+        setFilters(prev => ({
+            ...prev,
+            [name]: sanitizedValue,
+            page: 1
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            petType: 'all',
+            brand_id: '',
+            minPrice: '',
+            maxPrice: '',
+            categoryId: '',
+            page: 1
+        });
+        setPriceInputs({
+            minPrice: '',
+            maxPrice: ''
+        });
+    };
+
+    const handlePageChange = (newPage) => {
+        setFilters({
+            ...filters,
+            page: newPage
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const getImageUrl = (imageUrl) => {
+        if (!imageUrl) return '/images/placeholder-product.jpg';
         
-        <div className="content-container">
-          {selectedCategories.length > 0 && (
-            <div className="active-filters">
-              <span>Đã chọn {selectedCategories.length} danh mục</span>
-              <button className="clear-filters" onClick={clearAllFilters}>
-                <FaTimes /> Xóa bộ lọc
-              </button>
+        if (imageUrl.startsWith('http')) {
+            return imageUrl;
+        } else {
+            return `http://localhost:5000${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+        }
+    };
+
+    if (loading && products.length === 0) return <div className="loading">Đang tải...</div>;
+
+    return (
+        <div className="category-page">
+            <div className="page-header">
+                <h1>Phụ kiện thú cưng</h1>
+                <button
+                    className="filter-toggle-btn"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                >
+                    <FaFilter /> {isFilterOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+                </button>
             </div>
-          )}
-          
-          {error && <div className="error-message">{error}</div>}
-          
-          {loading ? (
-            <div className="loading-indicator">
-              <div className="spinner"></div>
-              <span>Đang tải dữ liệu...</span>
+
+            <div className={`filters-container ${isFilterOpen ? 'open' : ''}`}>
+                <div className="filters-header">
+                    <h2><FaSearch /> Bộ lọc tìm kiếm</h2>
+                    <button className="clear-filters" onClick={clearFilters}>
+                        <FaTimes /> Xóa bộ lọc
+                    </button>
+                </div>
+
+                <div className="filters">
+                    {/* Bộ lọc loại thú */}
+                    <div className="filter-group">
+                        <label><FaDog /> Loại thú:</label>
+                        <div className="select-wrapper">
+                            <select
+                                value={filters.petType}
+                                onChange={(e) => handleFilterChange('petType', e.target.value)}
+                            >
+                                <option value="all">Tất cả</option>
+                                <option value="dog">Chó</option>
+                                <option value="cat">Mèo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Bộ lọc danh mục phụ kiện */}
+                    <div className="filter-group">
+                        <label><FaPaw /> Danh mục:</label>
+                        <div className="select-wrapper">
+                            <select
+                                value={filters.categoryId}
+                                onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+                            >
+                                <option value="">Tất cả phụ kiện</option>
+                                {accessoryCategories.map(category => (
+                                    <option key={category.id} value={category.id}>
+                                        {category.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Bộ lọc thương hiệu */}
+                    <div className="filter-group">
+                        <label><FaTag /> Thương hiệu:</label>
+                        <div className="select-wrapper">
+                            <select
+                                value={filters.brand_id}
+                                onChange={(e) => handleFilterChange('brand_id', e.target.value)}
+                            >
+                                <option value="">Tất cả</option>
+                                {brands.map(brand => (
+                                    <option key={brand.id} value={brand.id}>
+                                        {brand.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Bộ lọc giá - đã sửa để sử dụng handlePriceFilterChange */}
+                    <div className="filter-group price-filter">
+                        <label><FaMoneyBillWave /> Giá (VNĐ):</label>
+                        <div className="price-inputs">
+                            <div className="price-input-wrapper">
+                                <input
+                                    type="number"
+                                    placeholder="Tối thiểu"
+                                    value={priceInputs.minPrice}
+                                    onChange={(e) => handlePriceFilterChange('minPrice', e.target.value)}
+                                />
+                            </div>
+                            <span className="price-separator">-</span>
+                            <div className="price-input-wrapper">
+                                <input
+                                    type="number"
+                                    placeholder="Tối đa"
+                                    value={priceInputs.maxPrice}
+                                    onChange={(e) => handlePriceFilterChange('maxPrice', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Hiển thị bộ lọc đang áp dụng */}
+                <div className="active-filters">
+                    {filters.petType !== 'all' && (
+                        <div className="filter-tag">
+                            Loại: {filters.petType === 'dog' ? 'Chó' : filters.petType === 'cat' ? 'Mèo' : filters.petType}
+                            <button onClick={() => handleFilterChange('petType', 'all')}><FaTimes /></button>
+                        </div>
+                    )}
+                    
+                    {filters.categoryId && (
+                        <div className="filter-tag">
+                            Danh mục: {accessoryCategories.find(c => c.id === filters.categoryId)?.name || filters.categoryId}
+                            <button onClick={() => handleFilterChange('categoryId', '')}><FaTimes /></button>
+                        </div>
+                    )}
+                    
+                    {filters.brand_id && (
+                        <div className="filter-tag">
+                            Thương hiệu: {brands.find(b => b.id === filters.brand_id)?.name || filters.brand_id}
+                            <button onClick={() => handleFilterChange('brand_id', '')}><FaTimes /></button>
+                        </div>
+                    )}
+                    
+                    {filters.minPrice && (
+                        <div className="filter-tag">
+                            Giá từ: {parseInt(filters.minPrice).toLocaleString('vi-VN')}đ
+                            <button onClick={() => {
+                                handleFilterChange('minPrice', '');
+                                setPriceInputs(prev => ({...prev, minPrice: ''}));
+                            }}><FaTimes /></button>
+                        </div>
+                    )}
+                    
+                    {filters.maxPrice && (
+                        <div className="filter-tag">
+                            Giá đến: {parseInt(filters.maxPrice).toLocaleString('vi-VN')}đ
+                            <button onClick={() => {
+                                handleFilterChange('maxPrice', '');
+                                setPriceInputs(prev => ({...prev, maxPrice: ''}));
+                            }}><FaTimes /></button>
+                        </div>
+                    )}
+                </div>
             </div>
-          ) : (
-            <>
-              <div className="results-info">
-                <p>Hiển thị {items.length} kết quả</p>
-              </div>
-              
-              <div className="items-grid">
-                {items.map(item => renderItem(item))}
-                {items.length === 0 && !loading && (
-                  <div className="no-results">
-                    {selectedCategories.length > 0 
-                      ? "Không tìm thấy kết quả phù hợp" 
-                      : "Vui lòng chọn danh mục để xem sản phẩm"}
-                  </div>
+
+            <div className="results-info">
+                <p>Hiển thị {products.length} sản phẩm (trang {pagination.page}/{pagination.totalPages || 1})</p>
+            </div>
+
+            {loading && <div className="loading-overlay">Đang tải...</div>}
+
+            <div className="products-grid">
+                {products.length > 0 ? (
+                    products.map(product => (
+                        <div key={product.id} className="product-card-container">
+                            <ProductCard
+                                product={{
+                                    ...product,
+                                    image: product.images && product.images[0] ? getImageUrl(product.images[0].image_url) : '/images/placeholder-product.jpg',
+                                }}
+                                onAddToCart={() => handleAddToCart(product)}
+                            />
+                        </div>
+                    ))
+                ) : (
+                    <p className="no-results">Không tìm thấy sản phẩm phù hợp</p>
                 )}
-              </div>
-            </>
-          )}
+            </div>
+
+            {/* Phân trang */}
+            {pagination.totalPages > 1 && (
+                <div className="pagination">
+                    <button 
+                        onClick={() => handlePageChange(pagination.page - 1)} 
+                        disabled={pagination.page === 1}
+                    >
+                        &laquo; Trang trước
+                    </button>
+                    
+                    {[...Array(pagination.totalPages).keys()].map(page => (
+                        <button 
+                            key={page + 1}
+                            onClick={() => handlePageChange(page + 1)}
+                            className={pagination.page === page + 1 ? 'active' : ''}
+                        >
+                            {page + 1}
+                        </button>
+                    ))}
+                    
+                    <button 
+                        onClick={() => handlePageChange(pagination.page + 1)} 
+                        disabled={pagination.page === pagination.totalPages}
+                    >
+                        Trang sau &raquo;
+                    </button>
+                </div>
+            )}
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default CategoryPage;

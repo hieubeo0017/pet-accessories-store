@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchSpaServiceById } from '../services/api';
 import './SpaServiceDetailPage.css';
+import RelatedSpaServices from '../components/spa/RelatedSpaServices';
 
 const SpaServiceDetailPage = () => {
   const { id } = useParams();
@@ -142,6 +143,7 @@ const SpaServiceDetailPage = () => {
           </Link>
         </div>
       </div>
+      <RelatedSpaServices currentServiceId={service.id} petType={service?.pet_type} />
     </div>
   );
 };

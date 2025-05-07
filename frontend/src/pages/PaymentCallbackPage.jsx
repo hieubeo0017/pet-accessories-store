@@ -35,7 +35,12 @@ const PaymentCallbackPage = () => {
       
       // Chuyển về trang lịch hẹn sau 3 giây
       setTimeout(() => {
-        navigate('/spa/appointments');
+        const appointmentId = extractAppointmentId(params.get('vnp_OrderInfo'));
+        if (appointmentId) {
+          navigate(`/spa/booking/confirmation/${appointmentId}`);
+        } else {
+          navigate('/spa/appointments');
+        }
       }, 3000);
     } else {
       // Thanh toán thất bại
@@ -92,10 +97,16 @@ const extractAppointmentId = (orderInfo) => {
   if (!orderInfo) return '';
   
   // Trích xuất ID từ chuỗi "THANHTOANAPTXXXX"
-  const match = orderInfo.match(/THANHTOAN(APT\d+)/i);
+  const match = orderInfo.match(/THANHTOAN(APT\d+)/i) || orderInfo.match(/(APT-\d+)/i);
   if (match && match[1]) {
-    return match[1].replace(/^(APT)(\d+)$/i, 'APT-$2');
+    // Đảm bảo ID có định dạng APT-XXXX
+    let id = match[1];
+    if (!id.includes('-')) {
+      id = id.replace(/^(APT)(\d+)$/i, 'APT-$2');
+    }
+    return id;
   }
+  
   return '';
 };
 

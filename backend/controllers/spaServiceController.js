@@ -12,16 +12,22 @@ const getAllSpaServices = async (req, res) => {
       limit = 10, 
       search = '', 
       pet_type = '',
-      pet_size = '',  // Thêm pet_size
+      pet_size = '',
       is_active,
       is_featured,
       sort_by = 'id',
       sort_order = 'DESC'
     } = req.query;
     
-    // Chuyển đổi is_active và is_featured thành boolean nếu có
-    let activeFilter = is_active === undefined ? null : 
-                      (is_active === 'true' || is_active === '1');
+    // Kiểm tra nếu request đến từ client
+    const isClientRequest = req.headers['x-client-view'] === 'true';
+    
+    // Nếu là client, luôn đặt is_active = true
+    // Nếu không, sử dụng giá trị từ query param nếu có
+    let activeFilter = isClientRequest ? true : 
+                      (is_active === undefined ? null : 
+                      (is_active === 'true' || is_active === '1'));
+                      
     let featuredFilter = is_featured === undefined ? null : 
                         (is_featured === 'true' || is_featured === '1');
     
@@ -30,7 +36,7 @@ const getAllSpaServices = async (req, res) => {
       limit: parseInt(limit),
       search,
       pet_type,
-      pet_size,  // Thêm pet_size vào options
+      pet_size,
       is_active: activeFilter,
       is_featured: featuredFilter,
       sort_by: ['id', 'name', 'price', 'duration'].includes(sort_by) ? sort_by : 'id',
@@ -58,6 +64,12 @@ const getSpaServiceById = async (req, res) => {
     
     if (!service) {
       return res.status(404).json({ message: `Không tìm thấy dịch vụ spa với ID ${id}` });
+    }
+    
+    // Kiểm tra nếu là request từ client và dịch vụ không active
+    const isClientRequest = req.headers['x-client-view'] === 'true';
+    if (isClientRequest && !service.is_active) {
+      return res.status(404).json({ message: 'Dịch vụ này hiện không khả dụng' });
     }
     
     res.status(200).json(service);
@@ -163,6 +175,7 @@ const getFeaturedSpaServices = async (req, res) => {
   try {
     const { limit = 5 } = req.query;
     
+    // Đảm bảo chỉ lấy dịch vụ active
     const services = await spaServiceModel.getFeaturedSpaServices(limit);
     
     res.status(200).json({
@@ -174,11 +187,54 @@ const getFeaturedSpaServices = async (req, res) => {
   }
 };
 
+/**
+ * Lấy danh sách dịch vụ liên quan
+ * @param {Object} req - Request
+ * @param {Object} res - Response
+ */
+const getRelatedServices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 4 } = req.query;
+    
+    // Lấy thông tin dịch vụ hiện tại
+    const currentService = await spaServiceModel.getSpaServiceById(id);
+    
+    if (!currentService) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Không tìm thấy dịch vụ' 
+      });
+    }
+    
+    // Lấy các dịch vụ liên quan (cùng loại thú cưng hoặc kích thước)
+    const relatedServices = await spaServiceModel.getRelatedServices({
+      currentId: id,
+      petType: currentService.pet_type,
+      petSize: currentService.pet_size,
+      limit: parseInt(limit)
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: relatedServices
+    });
+  } catch (error) {
+    console.error('Error getting related spa services:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy danh sách dịch vụ liên quan',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllSpaServices,
   getSpaServiceById,
   createSpaService,
   updateSpaService,
   deleteSpaService,
-  getFeaturedSpaServices
+  getFeaturedSpaServices,
+  getRelatedServices
 };

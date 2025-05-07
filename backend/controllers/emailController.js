@@ -223,6 +223,133 @@ const emailController = {
       console.error('Lỗi khi gửi email xác nhận đặt lịch:', err);
       throw err;
     }
+  },
+
+  sendPasswordResetEmail: async (to, resetToken) => {
+    try {
+      console.log(`Attempting to send password reset email to ${to} with token ${resetToken}`);
+      
+      // Sửa dòng này để sử dụng BREVO_API_KEY thay vì SENDINBLUE_API_KEY
+      if (!process.env.BREVO_API_KEY) {
+        console.error("BREVO_API_KEY không được cấu hình");
+        throw new Error("Email service không được cấu hình đúng");
+      }
+      
+      const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      
+      // Lấy URL frontend từ biến môi trường hoặc dùng giá trị mặc định
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+      
+      // Setup email data
+      sendSmtpEmail.to = [{ email: to }];
+      sendSmtpEmail.subject = "Đặt lại mật khẩu - Pet Accessories Store";
+      sendSmtpEmail.htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; padding: 20px 0; background-color: #4CAF50; color: white; border-radius: 5px 5px 0 0;">
+            <h1 style="margin: 0;">Đặt lại mật khẩu</h1>
+          </div>
+          
+          <div style="padding: 20px; border: 1px solid #eee; border-top: none; border-radius: 0 0 5px 5px;">
+            <p>Xin chào,</p>
+            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào nút bên dưới để đặt mật khẩu mới:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Đặt lại mật khẩu
+              </a>
+            </div>
+            
+            <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này hoặc liên hệ với chúng tôi nếu bạn có câu hỏi.</p>
+            
+            <p>Lưu ý: Liên kết này sẽ hết hạn sau 1 giờ.</p>
+            
+            <p style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 20px; color: #777; font-size: 13px;">
+              Đây là email tự động, vui lòng không trả lời. <br>
+              &copy; ${new Date().getFullYear()} Pet Accessories Store
+            </p>
+          </div>
+        </div>
+      `;
+      
+      // Cấu hình sender
+      sendSmtpEmail.sender = {
+        name: process.env.DEFAULT_SENDER_NAME || 'Pet Accessories Store',
+        email: process.env.EMAIL_FROM || 'chuthibinh201@gmail.com'
+      };
+      
+      // Send the email
+      const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      
+      // Thêm log khi gửi thành công
+      console.log(`Email đặt lại mật khẩu đã được gửi thành công đến ${to}`);
+      return { success: true, data };
+    } catch (err) {
+      console.error('Lỗi chi tiết khi gửi email đặt lại mật khẩu:', err);
+      throw err;
+    }
+  },
+
+  sendNewPasswordEmail: async (to, newPassword) => {
+    try {
+      console.log(`Attempting to send new password email to ${to}`);
+      
+      if (!process.env.BREVO_API_KEY) {
+        console.error("BREVO_API_KEY không được cấu hình");
+        throw new Error("Email service không được cấu hình đúng");
+      }
+      
+      const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      
+      // Setup email data
+      sendSmtpEmail.to = [{ email: to }];
+      sendSmtpEmail.subject = "Mật khẩu mới - Pet Accessories Store";
+      sendSmtpEmail.htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; padding: 20px 0; background-color: #4CAF50; color: white; border-radius: 5px 5px 0 0;">
+            <h1 style="margin: 0;">Mật khẩu mới của bạn</h1>
+          </div>
+          
+          <div style="padding: 20px; border: 1px solid #eee; border-top: none; border-radius: 0 0 5px 5px;">
+            <p>Xin chào,</p>
+            <p>Dưới đây là mật khẩu mới cho tài khoản của bạn:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 22px; letter-spacing: 2px; font-weight: bold;">
+                ${newPassword}
+              </div>
+            </div>
+            
+            <p>Vui lòng đăng nhập bằng mật khẩu mới này và thay đổi thành mật khẩu khác mà bạn có thể nhớ dễ dàng.</p>
+            
+            <p>Nếu bạn không yêu cầu mật khẩu mới, vui lòng liên hệ với chúng tôi ngay lập tức.</p>
+            
+            <p style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 20px; color: #777; font-size: 13px;">
+              Đây là email tự động, vui lòng không trả lời. <br>
+              &copy; ${new Date().getFullYear()} Pet Accessories Store
+            </p>
+          </div>
+        </div>
+      `;
+      
+      // Cấu hình sender
+      sendSmtpEmail.sender = {
+        name: process.env.DEFAULT_SENDER_NAME || 'Pet Accessories Store',
+        email: process.env.EMAIL_FROM || 'chuthibinh201@gmail.com'
+      };
+      
+      // Send the email
+      const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      
+      // Thêm log khi gửi thành công
+      console.log(`Email với mật khẩu mới đã được gửi thành công đến ${to}`);
+      return { success: true, data };
+    } catch (err) {
+      console.error('Lỗi chi tiết khi gửi email mật khẩu mới:', err);
+      throw err;
+    }
   }
 };
 

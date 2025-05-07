@@ -18,6 +18,7 @@ export const fetchPets = async (params = {}) => {
       min_price = '', 
       max_price = '',
       is_active, // Chỉ thêm tham số is_active nếu nó được định nghĩa
+      is_featured, // Thêm tham số này
       sort_by = 'id',
       sort_order = 'desc'
     } = params;
@@ -31,6 +32,12 @@ export const fetchPets = async (params = {}) => {
       url += `&is_active=false`;
     }
     // Khi is_active là null, không thêm vào URL để lấy tất cả records
+    
+    if (is_featured === true) {
+      url += `&is_featured=true`;
+    } else if (is_featured === false) {
+      url += `&is_featured=false`;
+    }
     
     if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`; 
     else if (search) url += `&search=${encodeURIComponent(search)}`;

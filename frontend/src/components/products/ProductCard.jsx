@@ -26,6 +26,24 @@ const ProductCard = ({ product }) => {
         return '/images/placeholder-product.jpg'; // Ảnh mặc định
     };
 
+    const handleImageError = (e) => {
+        e.target.onerror = null;
+        
+        // Lựa chọn ảnh fallback dựa trên thương hiệu (brand) của sản phẩm
+        if (product.brand === 'Pet Bowl') {
+            e.target.src = '/images/categories/bat-an.jpg';
+        } else if (product.brand === 'Pet Collar') {
+            e.target.src = '/images/categories/vong-co-cho.jpg'; // Sửa từ vongco.jpg thành vong-co-cho.jpg
+        } else if (product.brand === 'Pet Glass') {
+            e.target.src = '/images/categories/kinh-mat.jpg';
+        } else if (product.brand === 'Balo Pet') {
+            e.target.src = '/images/categories/phu-kien-cho-meo-balo.jpg';
+        } else {
+            // Fallback mặc định nếu không khớp với bất kỳ thương hiệu nào
+            e.target.src = '/images/categories/cat-food.jpg';
+        }
+    };
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -45,7 +63,7 @@ const ProductCard = ({ product }) => {
     return (
         <div className="product-card">
             <Link to={`/products/${product.id}`} className="product-link">
-                <img src={getImageUrl()} alt={product.name} className="product-image" />
+                <img src={getImageUrl()} alt={product.name} className="product-image" onError={handleImageError} />
                 <h3 className="product-name">{product.name}</h3>
                 <p className="product-description">{
                     product.description && product.description.length > 100

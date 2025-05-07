@@ -145,7 +145,11 @@ const SpaBookingConfirmation = () => {
             </div>
             <div className="booking-detail-row">
               <span className="label">Trạng thái:</span>
-              <span className="value status-badge confirmed">Đã xác nhận</span>
+              {appointment.payment_method === 'cash' ? (
+                <span className="value status-badge pending">Chờ xác nhận</span>
+              ) : (
+                <span className="value status-badge confirmed">Đã xác nhận</span>
+              )}
             </div>
             <div className="booking-detail-row">
               <span className="label">Phương thức thanh toán:</span>

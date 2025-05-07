@@ -24,7 +24,13 @@ export const fetchProducts = async (options = {}) => {
     if (brand_id) url += `&brand_id=${brand_id}`;
     if (pet_type) url += `&pet_type=${pet_type}`;
     if (is_active !== undefined) url += `&is_active=${is_active}`;
-    if (is_featured !== undefined) url += `&is_featured=${is_featured}`; // Thêm vào URL
+    // Thay đổi phần kiểm tra is_featured
+    if (is_featured === true) {
+      url += `&is_featured=true`;
+    } else if (is_featured === false) {
+      url += `&is_featured=false`;
+    }
+    // Chỉ gửi tham số khi is_featured là true hoặc false, không gửi khi undefined hoặc null
     
     url += `&sort_by=${sort_by}&sort_order=${sort_order}`;
     

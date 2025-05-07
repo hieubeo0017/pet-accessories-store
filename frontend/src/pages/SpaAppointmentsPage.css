@@ -1057,3 +1057,26 @@
   background-color: #616161;
   transform: translateY(-2px);
 }
+
+/* Hiển thị đúng nội dung "Đã đầy" */
+.time-slot-option .full-tag {
+  color: white;
+  background-color: #e53935;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+/* Đảm bảo full-tag nằm đúng vị trí trong khung giờ */
+.time-slot-option.disabled {
+  opacity: 0.9;
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+}
+
+.time-slot-option.disabled .time {
+  color: #d32f2f;
+}

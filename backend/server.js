@@ -42,11 +42,16 @@ const authRoutes = require('./routes/authRoutes'); // Add this line
 const blogRoutes = require('./routes/blogRoutes'); // Add this line
 const userRoutes = require('./routes/userRouters'); // Add this line
 const reviewRoutes = require('./routes/reviewRouters'); // Add this line
+const chatbotRoutes = require('./routes/chatbotRoutes'); // Thêm vào file server.js
 
 // Kết nối database
 connectDB()
   .then(() => console.log('SQL Server connected'))
   .catch(err => console.error('SQL Server connection error:', err));
+
+// Nạp dữ liệu cho chatbot khi khởi động server (thêm vào phần trước khi khởi động server)
+const chatbotController = require('./controllers/chatbotController');
+chatbotController.loadContextData();
 
 // Routes
 
@@ -68,6 +73,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/blogs', blogRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/chatbot', chatbotRoutes); // Thêm vào file server.js
 
 // Basic test route
 app.get('/', (req, res) => {
